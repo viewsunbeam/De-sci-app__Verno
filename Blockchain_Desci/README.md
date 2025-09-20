@@ -1,37 +1,44 @@
-# De-sci-app__Verno
+# De-sci-app__Verno / Blockchain_Desci
 
-本仓库为 DeSci 应用的单仓。详细的项目说明文档已迁移至：
+去中心化科学（DeSci）应用的单仓（monorepo）中的核心应用模块，包含一个完整的前后端实现：
 
-- `Blockchain_Desci/README.md`
+- `backend/` — Node.js + Express + SQLite 的后端 API 与数据处理
+- `frontend/` — Vue 3 + Vite + Naive UI 的前端 Web 应用
 
-请前往上述文件查看项目结构、快速启动、后端/前端说明、常见问题等内容。
+本 README 提供项目结构、快速启动、开发调试、关键 API、常见问题与注意事项。
 
-其他子模块（如 `De-Sci-hardhat/`）的文档请查看各自目录。
+---
 
+## 目录
+
+- 项目结构
+- 技术栈
+- 快速开始
+- 后端说明（运行、环境变量、数据库、路由总览）
+- 前端说明（运行、路由、与后端交互）
+- 开发与调试建议
+- 常见问题（FAQ）与注意事项
 
 ---
 
 ## 项目结构
 
 ```
-De-sci-app__Verno/
-├─ Blockchain_Desci/
-│  ├─ backend/
-│  │  ├─ index.js                 # Express 入口
-│  │  ├─ database.js              # better-sqlite3 封装与表结构初始化/迁移
-│  │  ├─ routes/                  # 业务路由（auth, users, projects, datasets, nfts 等）
-│  │  ├─ uploads/                 # 上传文件目录（静态服务 /uploads）
-│  │  ├─ package.json             # 后端依赖与启动脚本
-│  │  └─ desci.db                 # 本地 SQLite 数据库文件（自动创建/迁移）
-│  └─ frontend/
-│     ├─ src/
-│     │  ├─ main.js               # Vue 应用入口，注册 router
-│     │  ├─ router/index.js       # 前端路由表（Dashboard/Projects/Datasets/NFT 等）
-│     │  └─ composables/useWeb3.js# Web3 钱包连接与后端登录
-│     ├─ package.json             # 前端依赖与脚本（Vite）
-│     └─ vite.config.js
-├─ De-Sci-hardhat/                # 智能合约与脚本（已扁平化加入本仓库）
-└─ README.md
+Blockchain_Desci/
+├─ backend/
+│  ├─ index.js                 # Express 入口
+│  ├─ database.js              # better-sqlite3 封装与表结构初始化/迁移
+│  ├─ routes/                  # 业务路由（auth, users, projects, datasets, nfts 等）
+│  ├─ uploads/                 # 上传文件目录（静态服务 /uploads）
+│  ├─ package.json             # 后端依赖与启动脚本
+│  └─ desci.db                 # 本地 SQLite 数据库文件（自动创建/迁移）
+└─ frontend/
+   ├─ src/
+   │  ├─ main.js               # Vue 应用入口，注册 router
+   │  ├─ router/index.js       # 前端路由表（Dashboard/Projects/Datasets/NFT 等）
+   │  └─ composables/useWeb3.js# Web3 钱包连接与后端登录
+   ├─ package.json             # 前端依赖与脚本（Vite）
+   └─ vite.config.js
 ```
 
 ---
@@ -77,7 +84,7 @@ npm run dev
 
 ## 后端说明
 
-- 入口：`Blockchain_Desci/backend/index.js`
+- 入口：`backend/index.js`
   - 默认端口 `PORT=3000`
   - 静态资源：`/uploads`（目录：`backend/uploads/`）
   - 路由前缀：`/api/*`
@@ -90,7 +97,7 @@ PORT=3000
 ```
 
 - 数据库初始化：
-  - `Blockchain_Desci/backend/database.js` 在启动时使用 better-sqlite3 打开 `./desci.db` 并自动创建/迁移表结构。
+  - `backend/database.js` 在启动时使用 better-sqlite3 打开 `./desci.db` 并自动创建/迁移表结构。
   - 主要表：`users`、`projects`、`iterations`、`kanban_columns`、`kanban_cards`、`project_collaborators`、`project_files`、`proofs`、`nfts`、`milestones`、`datasets`、`dataset_files`、`dataset_permissions`、`dataset_usage`、`zk_proofs`、`reviews`、`citations`、`publications` 等。
 
 - 典型路由（部分）：
@@ -116,13 +123,13 @@ PORT=3000
 
 ## 前端说明
 
-- 入口：`Blockchain_Desci/frontend/src/main.js`
+- 入口：`frontend/src/main.js`
   - 启动 Vue 应用并注册路由；为 `ethers.js` 添加 `Buffer` polyfill。
 
-- 路由：`Blockchain_Desci/frontend/src/router/index.js`
+- 路由：`frontend/src/router/index.js`
   - 覆盖模块：Dashboard、Profile、Verify、Explore、Projects（含 Repository/Collaborators/Proof/Funding/NFT/My Items/Roadmap）、Datasets（列表/上传/详情/编辑/权限/分析/加密/私密查询）、Publications、Papers（提交/导入/详情/编辑/预览/发布）、Reviews（任务/详情/表单）、NFT（列表/铸造/详情）、公共用户档案等。
 
-- Web3 登录：`Blockchain_Desci/frontend/src/composables/useWeb3.js`
+- Web3 登录：`frontend/src/composables/useWeb3.js`
   - 使用 `web3modal` 连接钱包，`ethers` 创建 `Web3Provider` 与 `signer`。
   - 连接成功后调用后端 `POST http://localhost:3000/api/auth/login` 完成登录。
 
@@ -142,7 +149,7 @@ PORT=3000
   - 钱包事件（`accountsChanged/chainChanged/disconnect`）已在 `useWeb3.js` 订阅，调试链切换时需注意页面会 reload。
 
 - 数据库
-  - SQLite 文件为 `Blockchain_Desci/backend/desci.db`。
+  - SQLite 文件为 `backend/desci.db`。
   - 若需要重置，可在停止服务器后备份/删除该文件（请谨慎操作）。
 
 ---
@@ -150,7 +157,7 @@ PORT=3000
 ## 常见问题（FAQ）
 
 1. 运行 `git add` 时提示“嵌入式 git 仓库”怎么办？
-   - 本仓库已将 `Blockchain_Desci/` 与 `De-Sci-hardhat/` 扁平化并入（非子模块），无需将其视作子模块；若未来需要拆分，可改为 `git submodule`。
+   - 本模块所在目录已被扁平化纳入上层仓库（非子模块），无需将其视作子模块；若未来需要拆分，可改为 `git submodule`。
 
 2. `GET /api/nfts/:nftId` 报错 `metadata` 未定义？
    - 请修复 `routes/nfts.js` 中该路由的返回数据，去除 `...metadata` 或从 `metadata_uri` 解析后再展开。
