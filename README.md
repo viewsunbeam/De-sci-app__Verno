@@ -1,175 +1,352 @@
-# De-sci-app__Verno
+# Verno - 去中心化科学研究平台
 
-本仓库为 DeSci 应用的单仓。详细的项目说明文档已迁移至：
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org)
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.0-brightgreen.svg)](https://vuejs.org)
+[![Solidity](https://img.shields.io/badge/Solidity-0.8+-blue.svg)](https://soliditylang.org)
 
-- `Blockchain_Desci/README.md`
+## 📖 项目简介
 
-请前往上述文件查看项目结构、快速启动、后端/前端说明、常见问题等内容。
+Verno 是一个基于区块链技术的去中心化科学研究平台，旨在为科研工作者提供安全、透明、可信的数据共享和成果展示环境。平台集成了NFT铸造、隐私保护、零知识证明等先进技术，支持科研数据的安全共享和知识产权保护。
 
-其他子模块（如 `De-Sci-hardhat/`）的文档请查看各自目录。
+## ✨ 核心功能
 
+### 🔬 科研管理
+- **项目管理**: 创建和管理科研项目，支持多人协作
+- **数据集管理**: 上传、存储和共享科研数据集
+- **论文发布**: 发布科研论文，支持同行评议
+- **影响力排名**: 基于贡献度的学者影响力评估
 
----
+### 🛡️ 隐私保护
+- **零知识证明**: 支持ZK-SNARK隐私验证
+- **数据加密**: 敏感数据端到端加密
+- **访问控制**: 细粒度的数据访问权限管理
+- **隐私查询**: 在不暴露原始数据的情况下进行查询
 
-## 项目结构
+### 🎯 NFT生态
+- **成果铸造**: 将科研成果铸造为NFT
+- **知识产权**: 保护和交易知识产权
+- **激励机制**: 基于贡献的代币激励
+- **市场交易**: 去中心化的科研成果交易市场
 
+### 🏛️ 治理系统
+- **同行评议**: 分布式的论文评审机制
+- **社区治理**: 基于DAO的平台治理
+- **声誉系统**: 科研声誉积累和评估
+- **管理后台**: 平台活动监控和日志管理
+
+## 🏗️ 技术架构
+
+### 前端技术栈
+- **Vue.js 3**: 响应式用户界面框架
+- **Naive UI**: 现代化UI组件库
+- **Vue Router**: 单页应用路由管理
+- **Pinia**: 状态管理
+- **Vite**: 快速构建工具
+
+### 后端技术栈
+- **Node.js**: 服务器运行环境
+- **Express.js**: Web应用框架
+- **SQLite**: 轻量级数据库
+- **Multer**: 文件上传处理
+- **CORS**: 跨域资源共享
+
+### 区块链技术
+- **Ethereum**: 主要区块链网络
+- **Solidity**: 智能合约编程语言
+- **Hardhat**: 开发和测试框架
+- **OpenZeppelin**: 安全的合约库
+- **Ethers.js**: 区块链交互库
+
+### 智能合约模块
+- **DeSciPlatform**: 平台核心合约
+- **ResearchNFT**: NFT铸造和管理
+- **DatasetManager**: 数据集管理合约
+- **ZKPVerifier**: 零知识证明验证
+- **InfluenceRanking**: 影响力排名系统
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Node.js 18+
+- npm 或 yarn
+- Git
+
+### 安装步骤
+
+1. **克隆项目**
+```bash
+git clone <repository-url>
+cd verno-desci-platform
 ```
-De-sci-app__Verno/
-├─ Blockchain_Desci/
-│  ├─ backend/
-│  │  ├─ index.js                 # Express 入口
-│  │  ├─ database.js              # better-sqlite3 封装与表结构初始化/迁移
-│  │  ├─ routes/                  # 业务路由（auth, users, projects, datasets, nfts 等）
-│  │  ├─ uploads/                 # 上传文件目录（静态服务 /uploads）
-│  │  ├─ package.json             # 后端依赖与启动脚本
-│  │  └─ desci.db                 # 本地 SQLite 数据库文件（自动创建/迁移）
-│  └─ frontend/
-│     ├─ src/
-│     │  ├─ main.js               # Vue 应用入口，注册 router
-│     │  ├─ router/index.js       # 前端路由表（Dashboard/Projects/Datasets/NFT 等）
-│     │  └─ composables/useWeb3.js# Web3 钱包连接与后端登录
-│     ├─ package.json             # 前端依赖与脚本（Vite）
-│     └─ vite.config.js
-├─ De-Sci-hardhat/                # 智能合约与脚本（已扁平化加入本仓库）
-└─ README.md
+
+2. **安装依赖**
+```bash
+# 安装根目录和前端依赖
+npm run install-all
 ```
 
----
-
-## 技术栈
-
-- 后端：Node.js、Express、better-sqlite3、Multer、CORS、dotenv、axios、ethers（v5）
-- 前端：Vue 3、Vite、Naive UI、vue-router、axios、web3modal、ethers（v5）
-- 数据库：SQLite（本地文件 `desci.db`）
-
----
-
-## 快速开始
-
-准备条件：
-
-- Node.js 18+（推荐 20.x）
-- npm 或 pnpm（任选）
-
-1) 启动后端
-
-```
-cd Blockchain_Desci/backend
-npm install
-# 可选：创建 .env
-# PORT=3000
-npm start
-# 服务器将监听 http://localhost:3000
+3. **启动区块链网络**
+```bash
+# 启动本地Hardhat网络
+npm run start-blockchain
 ```
 
-2) 启动前端
-
+4. **部署智能合约**
+```bash
+# 在新终端中部署合约
+npm run deploy-contracts
 ```
-cd Blockchain_Desci/frontend
-npm install
+
+5. **启动开发服务器**
+```bash
+# 启动后端和前端开发服务器
 npm run dev
-# Vite 默认运行在 http://localhost:5173 （或控制台显示的端口）
+
+# 或使用一键启动脚本
+npm run start-full
 ```
 
-3) 浏览器访问前端地址，并在需要的页面尝试连接钱包、浏览数据集/项目等功能。
+### 访问应用
 
----
+- **前端应用**: http://localhost:5173
+- **后端API**: http://localhost:3000
+- **区块链网络**: http://localhost:8545
 
-## 后端说明
+## 📝 使用指南
 
-- 入口：`Blockchain_Desci/backend/index.js`
-  - 默认端口 `PORT=3000`
-  - 静态资源：`/uploads`（目录：`backend/uploads/`）
-  - 路由前缀：`/api/*`
+### 用户角色
 
-- 环境变量（`.env` 可选）：
+1. **研究员 (Researcher)**
+   - 创建和管理科研项目
+   - 上传和共享数据集
+   - 发布研究论文
+   - 铸造研究成果NFT
+
+2. **评审员 (Reviewer)**
+   - 参与论文同行评议
+   - 审核科研数据质量
+   - 验证研究成果
+
+3. **管理员 (Admin)**
+   - 监控平台活动
+   - 管理用户权限
+   - 查看系统日志
+   - 平台配置管理
+
+### 主要工作流程
+
+1. **连接钱包**: 使用MetaMask等Web3钱包连接平台
+2. **创建项目**: 设置科研项目基本信息和协作者
+3. **上传数据**: 上传科研数据集，设置访问权限
+4. **发布论文**: 提交研究论文，等待同行评议
+5. **铸造NFT**: 将重要成果铸造为NFT保护知识产权
+6. **隐私查询**: 使用零知识证明进行隐私保护的数据查询
+
+### 测试账户
+
+平台提供测试账户方便体验：
+
+```javascript
+// 管理员账户
+地址: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+私钥: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+// 研究员账户
+地址: 0x7D3f2C3635418e7BeB03548278da20c1434c86CA
+私钥: 通过前端测试模式切换身份
+```
+
+⚠️ **注意**: 这些是测试网络账户，请勿在主网使用！
+
+## 🗂️ 项目结构
 
 ```
-# Blockchain_Desci/backend/.env
-PORT=3000
+verno-desci-platform/
+├── contracts/                 # 智能合约
+│   ├── DeSciPlatform.sol     # 平台核心合约
+│   ├── ResearchNFT.sol       # NFT合约
+│   ├── DatasetManager.sol    # 数据管理合约
+│   ├── ZKPVerifier.sol       # 零知识证明验证
+│   └── ...
+├── frontend/                  # Vue.js前端应用
+│   ├── src/
+│   │   ├── components/       # 可复用组件
+│   │   ├── views/           # 页面视图
+│   │   ├── router/          # 路由配置
+│   │   ├── composables/     # 组合式API
+│   │   └── main.js          # 应用入口
+│   ├── public/              # 静态资源
+│   └── package.json         # 前端依赖
+├── routes/                   # Express路由
+│   ├── auth.js              # 用户认证
+│   ├── datasets.js          # 数据集API
+│   ├── nfts.js              # NFT API
+│   └── ...
+├── utils/                    # 工具函数
+├── uploads/                  # 上传文件存储
+├── artifacts/                # 编译后的合约
+├── cache/                    # 构建缓存
+├── index.js                  # 后端入口文件
+├── database.js               # 数据库配置
+├── hardhat.config.js         # Hardhat配置
+├── deployEnhancedDeSci.js    # 合约部署脚本
+└── package.json              # 项目依赖
 ```
 
-- 数据库初始化：
-  - `Blockchain_Desci/backend/database.js` 在启动时使用 better-sqlite3 打开 `./desci.db` 并自动创建/迁移表结构。
-  - 主要表：`users`、`projects`、`iterations`、`kanban_columns`、`kanban_cards`、`project_collaborators`、`project_files`、`proofs`、`nfts`、`milestones`、`datasets`、`dataset_files`、`dataset_permissions`、`dataset_usage`、`zk_proofs`、`reviews`、`citations`、`publications` 等。
+## 🔧 开发指南
 
-- 典型路由（部分）：
-  - 用户：`GET /api/users/wallet/:walletAddress`、`GET /api/users/username/:username`、`GET /api/users/:userId/dashboard-stats`
-  - 数据集：
-    - `GET /api/datasets?wallet_address=...` 查询我的数据集
-    - `GET /api/datasets/explore` 浏览公共数据集
-    - `GET /api/datasets/:id` 读取单个数据集（含权限校验/usage 记录）
-    - `POST /api/datasets/upload` 多文件上传（字段名 `datasets`，单文件≤100MB）
-    - `PUT /api/datasets/:id`、`DELETE /api/datasets/:id`
-    - 权限：`GET/POST/DELETE /api/datasets/:id/permissions...`
-    - 加密与 ZK：`POST /api/datasets/:id/encrypt`、`POST /api/datasets/:id/zk-proof`、`POST /api/datasets/zk-proof/:proofId/verify`
-  - NFT：
-    - `GET /api/nfts/user/:walletAddress`
-    - `POST /api/nfts/mint`（本地模拟 mint，生成 `tokenId/contractAddress/metadata`）
-    - `POST /api/nfts/:nftId/list`（本地模拟上架）
-    - `GET /api/nfts`（市场视图）
-    - `POST /api/nfts/marketplace/purchase`（本地事务模拟）
+### 本地开发
 
-> 提示：生产部署时建议将上传文件迁移到对象存储（如 S3/OSS），并在 `index.js` 中收紧 CORS 白名单。
+1. **后端开发**
+```bash
+# 启动后端服务器
+npm start
+
+# 监听文件变化（需要安装nodemon）
+npx nodemon index.js
+```
+
+2. **前端开发**
+```bash
+cd frontend
+npm run dev
+```
+
+3. **智能合约开发**
+```bash
+# 编译合约
+npx hardhat compile
+
+# 运行测试
+npx hardhat test
+
+# 部署到本地网络
+npx hardhat run deployEnhancedDeSci.js --network localhost
+```
+
+### 数据库管理
+
+平台使用SQLite数据库，主要表结构：
+
+- **users**: 用户信息和钱包地址
+- **projects**: 科研项目数据
+- **datasets**: 数据集管理
+- **nfts**: NFT元数据
+- **reviews**: 论文评审记录
+- **activity_logs**: 系统活动日志
+
+### API接口
+
+主要API端点：
+
+- `GET /api/users/wallet/:address` - 获取用户信息
+- `POST /api/projects` - 创建新项目
+- `GET /api/datasets` - 获取数据集列表
+- `POST /api/nfts/mint` - 铸造NFT
+- `GET /api/reviews` - 获取评审任务
+- `GET /api/logs` - 系统日志（管理员）
+
+## 🧪 测试
+
+### 前端测试
+```bash
+cd frontend
+npm run test
+```
+
+### 智能合约测试
+```bash
+npx hardhat test
+```
+
+### 集成测试
+```bash
+./quick-test.sh
+```
+
+## 📦 部署
+
+### 测试网部署
+
+1. **配置网络**
+```javascript
+// hardhat.config.js
+module.exports = {
+  networks: {
+    sepolia: {
+      url: "https://sepolia.infura.io/v3/YOUR-PROJECT-ID",
+      accounts: ["YOUR-PRIVATE-KEY"]
+    }
+  }
+};
+```
+
+2. **部署合约**
+```bash
+npx hardhat run deployEnhancedDeSci.js --network sepolia
+```
+
+### 生产环境部署
+
+1. **环境配置**
+```bash
+# 设置环境变量
+export NODE_ENV=production
+export DATABASE_URL=your-production-db-url
+export INFURA_PROJECT_ID=your-infura-id
+```
+
+2. **构建前端**
+```bash
+cd frontend
+npm run build
+```
+
+3. **启动服务**
+```bash
+npm start
+```
+
+## 🤝 贡献指南
+
+我们欢迎社区贡献！请遵循以下步骤：
+
+1. Fork 项目
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 创建 Pull Request
+
+### 代码规范
+
+- 使用 ESLint 进行代码检查
+- 遵循 Vue.js 官方风格指南
+- 智能合约遵循 Solidity 最佳实践
+- 提交信息使用英文，格式：`type: description`
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+## 🙏 致谢
+
+感谢以下开源项目和社区：
+
+- [Vue.js](https://vuejs.org/) - 前端框架
+- [Hardhat](https://hardhat.org/) - 智能合约开发
+- [OpenZeppelin](https://openzeppelin.com/) - 安全合约库
+- [Naive UI](https://www.naiveui.com/) - UI组件库
+- [Express.js](https://expressjs.com/) - 后端框架
+
+## 📞 联系我们
+
+- **项目维护者**: Verno Team
+- **邮箱**: contact@verno.tech
+- **官网**: https://verno.tech
+- **文档**: https://docs.verno.tech
 
 ---
 
-## 前端说明
-
-- 入口：`Blockchain_Desci/frontend/src/main.js`
-  - 启动 Vue 应用并注册路由；为 `ethers.js` 添加 `Buffer` polyfill。
-
-- 路由：`Blockchain_Desci/frontend/src/router/index.js`
-  - 覆盖模块：Dashboard、Profile、Verify、Explore、Projects（含 Repository/Collaborators/Proof/Funding/NFT/My Items/Roadmap）、Datasets（列表/上传/详情/编辑/权限/分析/加密/私密查询）、Publications、Papers（提交/导入/详情/编辑/预览/发布）、Reviews（任务/详情/表单）、NFT（列表/铸造/详情）、公共用户档案等。
-
-- Web3 登录：`Blockchain_Desci/frontend/src/composables/useWeb3.js`
-  - 使用 `web3modal` 连接钱包，`ethers` 创建 `Web3Provider` 与 `signer`。
-  - 连接成功后调用后端 `POST http://localhost:3000/api/auth/login` 完成登录。
-
-> 建议：将后端基础地址提取为前端可配置的 `API_BASE_URL`，避免硬编码 `http://localhost:3000`。
-
----
-
-## 开发与调试建议
-
-- 后端开发
-  - 使用 REST 客户端（curl、Postman、VSCode REST）联调 `http://localhost:3000/api/*`。
-  - 注意 `routes/nfts.js` 中 `GET /api/nfts/:nftId` 存在 `...metadata` 未定义的问题，运行前建议修复，否则会抛错。
-  - 如需更大文件上传，调整 `routes/datasets.js` 中的 `limits.fileSize`。
-
-- 前端开发
-  - 使用 `npm run dev` 启动 Vite 开发服务器，配合浏览器调试。
-  - 钱包事件（`accountsChanged/chainChanged/disconnect`）已在 `useWeb3.js` 订阅，调试链切换时需注意页面会 reload。
-
-- 数据库
-  - SQLite 文件为 `Blockchain_Desci/backend/desci.db`。
-  - 若需要重置，可在停止服务器后备份/删除该文件（请谨慎操作）。
-
----
-
-## 常见问题（FAQ）
-
-1. 运行 `git add` 时提示“嵌入式 git 仓库”怎么办？
-   - 本仓库已将 `Blockchain_Desci/` 与 `De-Sci-hardhat/` 扁平化并入（非子模块），无需将其视作子模块；若未来需要拆分，可改为 `git submodule`。
-
-2. `GET /api/nfts/:nftId` 报错 `metadata` 未定义？
-   - 请修复 `routes/nfts.js` 中该路由的返回数据，去除 `...metadata` 或从 `metadata_uri` 解析后再展开。
-
-3. 前端无法连接后端？
-   - 确保后端监听 `http://localhost:3000`，并前端请求地址与之匹配；必要时设置代理或将地址提取为环境变量。
-
----
-
-## 许可证
-
-未指定，请根据项目需求补充（例如 MIT/Apache-2.0 等）。
-
----
-
-## 贡献指南（可选）
-
-欢迎提交 Issue/PR。建议在提交前：
-
-- 保持代码风格一致（lint 与格式化）
-- 更新对应文档与注释
-- 附带最小复现或截图/录屏
+⭐ 如果这个项目对您有帮助，请给我们一个 Star！

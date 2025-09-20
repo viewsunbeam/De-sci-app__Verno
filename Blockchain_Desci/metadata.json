@@ -1,8 +1,0 @@
-{
-  "dataset_info": {
-    "name": "User Demographics",
-    "version": "1.0",
-    "columns": ["id", "name", "age", "city"],
-    "total_records": 3
-  }
-}
