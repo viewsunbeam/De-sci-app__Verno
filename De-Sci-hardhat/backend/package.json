@@ -1,0 +1,17 @@
+{
+  "name": "desci-backend-demo",
+  "version": "1.0.0",
+  "description": "DeSci Platform Backend MVP Demo",
+  "main": "demo_mvp.js",
+  "scripts": {
+    "demo": "node demo_mvp.js",
+    "start-backend": "go run cmd/server/main.go",
+    "test": "go test ./internal/... ./tests/... -v"
+  },
+  "dependencies": {
+    "axios": "^1.4.0"
+  },
+  "keywords": ["blockchain", "desci", "mvp", "demo"],
+  "author": "DeSci Team",
+  "license": "MIT"
+}
