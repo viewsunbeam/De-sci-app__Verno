@@ -1,9 +1,45 @@
-# Verno - 去中心化科学研究平台
+# <div align="center">
+  <br/>
+  <img src="https://img.alicdn.com/imgextra/i1/O1CN01QMMdMT1DfTbTJSNjl_!!6000000000227-2-tps-400-400.png" alt="Verno Logo" width="120">
+  <h1>Verno · 去中心化科研平台</h1>
+  <p><strong>Chain the Truth of Science — 链上可信 · 链下高效</strong></p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org)
-[![Vue.js](https://img.shields.io/badge/Vue.js-3.0-brightgreen.svg)](https://vuejs.org)
-[![Solidity](https://img.shields.io/badge/Solidity-0.8+-blue.svg)](https://soliditylang.org)
+  <p>
+    <em>科研者连接世界，区块链见证每一次求索。</em>
+  </p>
+
+  <p>
+    <strong>🏆 CCF 第四届大学生区块链技术与创新应用竞赛参赛项目</strong>
+  </p>
+
+  <p>
+    <a href="docs/demo-api-playbook.md"><strong>⚡ API 通关指引</strong></a> •
+    <a href="docs/frontend-navigation.md"><strong>前端导航</strong></a> •
+    <a href="docs/web3-architecture-story.md"><strong>Web3 架构叙事</strong></a> •
+    <a href="#-快速开始"><strong>快速开始</strong></a> •
+    <a href="#-核心功能"><strong>功能亮点</strong></a>
+  </p>
+
+  <p>
+    <a href="https://opensource.org/licenses/MIT">
+      <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+    </a>
+    <a href="https://nodejs.org/">
+      <img src="https://img.shields.io/badge/Node.js-%3E%3D20.0.0-brightgreen.svg" alt="Node">
+    </a>
+    <a href="https://hardhat.org/">
+      <img src="https://img.shields.io/badge/Hardhat-^2.26-yellow.svg" alt="Hardhat">
+    </a>
+    <a href="https://go.dev/">
+      <img src="https://img.shields.io/badge/Go-%3E%3D1.23-00ADD8.svg" alt="Golang">
+    </a>
+    <a href="https://github.com/viewsunbeam/De-sci-app__Verno">
+      <img src="https://img.shields.io/github/stars/viewsunbeam/De-sci-app__Verno?style=social" alt="Stars">
+    </a>
+  </p>
+</div>
+
+---
 
 ## 📖 项目简介
 
