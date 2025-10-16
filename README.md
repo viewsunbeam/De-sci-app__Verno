@@ -7,7 +7,14 @@
 
 ## 📖 项目简介
 
-Verno 是一个基于区块链技术的去中心化科学研究平台，旨在为科研工作者提供安全、透明、可信的数据共享和成果展示环境。平台集成了NFT铸造、隐私保护、零知识证明等先进技术，支持科研数据的安全共享和知识产权保护。
+Verno 是一个面向去中心化科研生态的区块链平台，提供可信的数据共享、科研成果溯源与隐私保护能力。系统兼容链上写、链下读的混合架构，结合 NFT 与零知识证明，帮助科研团队在公开透明的同时维护数据主权。
+
+## 🎯 赛事背景
+
+- **参赛赛事**：中国计算机学会（CCF）第四届大学生区块链技术与创新应用竞赛  
+- **作品名称**：Verno 去中心化科研平台  
+- **参赛成员**：周子为、张家畅、朱妍琦、李佳凝  
+- **核心亮点**：以“链上可信 · 链下高效”为主题，演示科研成果登记、隐私校验、激励结算的全流程闭环，凸显 Web3 在科研审查与成果确权中的价值。
 
 ## ✨ 核心功能
 
@@ -67,52 +74,59 @@ Verno 是一个基于区块链技术的去中心化科学研究平台，旨在�
 
 ## 🚀 快速开始
 
-### 环境要求
+### 首选：一键本地演示（Docker Compose）
 
-- Node.js 18+
-- npm 或 yarn
+```bash
+git clone https://github.com/viewsunbeam/De-sci-app__Verno.git
+cd De-sci-app__Verno
+cp .env.example .env
+docker compose up --build --detach
+```
+
+启动完成后：
+
+- 前端演示台：<http://localhost:5173>
+- 后端 API：<http://localhost:3000>
+- 链下监听服务：<http://localhost:8088/health>
+- Hardhat RPC：<http://localhost:8545>
+
+重新部署合约与同步 ABI：
+
+```bash
+docker compose run --rm contracts
+docker compose restart backend
+```
+
+如需停止并清理环境：
+
+```bash
+docker compose down
+```
+
+> NOTES：合约部署产物与 ABI 会保存在 `contracts-data` 卷中，方便前端与链下服务共享。
+
+### 手动部署（开发模式）
+
+**环境要求**
+
+- Node.js 20+
+- npm（或兼容的 pnpm / yarn）
 - Git
 
-### 安装步骤
+**步骤**
 
-1. **克隆项目**
 ```bash
-git clone <repository-url>
-cd verno-desci-platform
+git clone https://github.com/viewsunbeam/De-sci-app__Verno.git
+cd De-sci-app__Verno
+npm run install-all          # 安装根目录与前端依赖
+
+npm run start-blockchain     # 终端1：Hardhat 节点
+npm run deploy-contracts     # 终端2：部署并同步 ABI
+npm run dev                  # 终端3：启动前端与后端
 ```
 
-2. **安装依赖**
-```bash
-# 安装根目录和前端依赖
-npm run install-all
-```
+开发时亦可使用 `npm run chain-api:start` 在本机直接运行 Go 链下服务。
 
-3. **启动区块链网络**
-```bash
-# 启动本地Hardhat网络
-npm run start-blockchain
-```
-
-4. **部署智能合约**
-```bash
-# 在新终端中部署合约
-npm run deploy-contracts
-```
-
-5. **启动开发服务器**
-```bash
-# 启动后端和前端开发服务器
-npm run dev
-
-# 或使用一键启动脚本
-npm run start-full
-```
-
-### 访问应用
-
-- **前端应用**: http://localhost:5173
-- **后端API**: http://localhost:3000
-- **区块链网络**: http://localhost:8545
 
 ## 📝 使用指南
 
@@ -179,17 +193,21 @@ verno-desci-platform/
 │   │   └── main.js          # 应用入口
 │   ├── public/              # 静态资源
 │   └── package.json         # 前端依赖
+├── services/
+│   └── chain-api/          # Go 链下监听 + REST 服务
 ├── routes/                   # Express路由
 │   ├── auth.js              # 用户认证
 │   ├── datasets.js          # 数据集API
 │   ├── nfts.js              # NFT API
 │   └── ...
+├── config/                  # 区块链与服务端配置加载
+├── scripts/                 # 开发运维脚本（ABI同步等）
 ├── utils/                    # 工具函数
 ├── uploads/                  # 上传文件存储
 ├── artifacts/                # 编译后的合约
 ├── cache/                    # 构建缓存
 ├── index.js                  # 后端入口文件
-├── database.js               # 数据库配置
+├── database.js               # 数据库配置（支持 SQLITE_DB_PATH）
 ├── hardhat.config.js         # Hardhat配置
 ├── deployEnhancedDeSci.js    # 合约部署脚本
 └── package.json              # 项目依赖
@@ -198,6 +216,12 @@ verno-desci-platform/
 ## 🔧 开发指南
 
 ### 本地开发
+
+启动前请复制环境变量模板，根据需要修改端口、链上服务地址等配置：
+
+```bash
+cp .env.example .env
+```
 
 1. **后端开发**
 ```bash
@@ -222,8 +246,43 @@ npx hardhat compile
 # 运行测试
 npx hardhat test
 
-# 部署到本地网络
-npx hardhat run deployEnhancedDeSci.js --network localhost
+# 部署到本地网络（包含 ABI 同步）
+npm run deploy-contracts
+
+# 如需单独同步 ABI，可执行
+npm run sync-contracts
+```
+
+4. **链下监听服务（Go）**
+```bash
+cd services/chain-api
+cp .env.example .env   # 首次运行时填写合约地址/数据库配置
+go run cmd/server/main_simple.go
+
+# 或使用脚本
+./start.sh
+# 或在仓库根目录执行
+cd .. && npm run chain-api:start
+```
+
+### Docker 快速启动
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+容器启动后：
+
+- 前端：<http://localhost:5173>
+- 后端：<http://localhost:3000>
+- 链下服务健康检查：<http://localhost:8088/health>
+- Hardhat RPC：<http://localhost:8545>
+
+如需重新部署合约，可在容器环境中执行：
+
+```bash
+docker compose run --rm contracts
 ```
 
 ### 数据库管理
@@ -247,6 +306,14 @@ npx hardhat run deployEnhancedDeSci.js --network localhost
 - `POST /api/nfts/mint` - 铸造NFT
 - `GET /api/reviews` - 获取评审任务
 - `GET /api/logs` - 系统日志（管理员）
+
+更多 API 调试与 Demo 步骤详见 `docs/demo-api-playbook.md`。
+
+### 参考文档
+
+- `docs/demo-api-playbook.md`：端到端 API 操作指南  
+- `docs/web3-architecture-story.md`：竞赛叙事与 Web3 架构取舍说明  
+- `docs/integration-plan.md`：合并两个代码仓库的整体策略
 
 ## 🧪 测试
 
