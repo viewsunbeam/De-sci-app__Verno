@@ -313,6 +313,7 @@ docker compose run --rm contracts
 
 - `docs/demo-api-playbook.md`：端到端 API 操作指南  
 - `docs/web3-architecture-story.md`：竞赛叙事与 Web3 架构取舍说明  
+- `docs/frontend-navigation.md`：前端路由结构与页面职责  
 - `docs/integration-plan.md`：合并两个代码仓库的整体策略
 
 ## 🧪 测试
