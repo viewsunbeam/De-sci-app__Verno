@@ -2,35 +2,35 @@
   <div class="influence-page">
     <!-- Header Section -->
     <div class="page-header">
-      <h1>🎯 Influence Ranking</h1>
-      <p>Track and analyze your scientific influence across the DeSci ecosystem</p>
+      <h1>🎯 竞赛影响力榜单</h1>
+      <p>实时查看团队在 Verno 科研生态中的贡献评分，辅助评委快速评估</p>
     </div>
 
     <!-- User Basic Info Card -->
-    <n-card class="user-info-card" title="🔍 User Profile">
+    <n-card class="user-info-card" title="🔍 参赛者概览">
       <div class="user-info-content">
         <div class="user-address">
           <n-tag type="info" size="large">
             <template #icon>
               <n-icon :component="WalletOutline" />
             </template>
-            {{ userAddress || 'Not Connected' }}
+            {{ userAddress || '钱包未连接' }}
           </n-tag>
         </div>
         
         <div class="user-status">
           <div class="status-item">
-            <span class="label">Status:</span>
+            <span class="label">身份状态：</span>
             <n-tag :type="getStatusType(userStatus)" round>
               <template #icon>
                 <n-icon :component="getStatusIcon(userStatus)" />
               </template>
-              {{ userStatus }}
+              {{ statusDisplay }}
             </n-tag>
           </div>
           
           <div class="status-item">
-            <span class="label">Network:</span>
+            <span class="label">网络：</span>
             <n-tag type="warning" round>
               <template #icon>
                 <n-icon :component="GlobeOutline" />
@@ -40,7 +40,7 @@
           </div>
           
           <div class="status-item">
-            <span class="label">Last Update:</span>
+            <span class="label">最近更新时间：</span>
             <span class="timestamp">{{ formatDate(lastUpdateTime) }}</span>
           </div>
         </div>
@@ -55,19 +55,19 @@
             <template #icon>
               <n-icon :component="RefreshOutline" />
             </template>
-            Update My Influence
+            刷新影响力
           </n-button>
         </div>
       </div>
     </n-card>
 
     <!-- Total Influence Overview -->
-    <n-card class="total-influence-card" title="📊 Total Influence Score">
+    <n-card class="total-influence-card" title="📊 综合影响力得分">
       <div class="influence-overview">
         <div class="score-display">
           <div class="main-score">
             <span class="score-number">{{ totalInfluence.toLocaleString() }}</span>
-            <span class="score-label">Total Influence</span>
+            <span class="score-label">总分</span>
           </div>
           
           <div class="rank-info" v-if="userRank">
@@ -75,13 +75,13 @@
               <template #icon>
                 <n-icon :component="TrophyOutline" />
               </template>
-              Rank #{{ userRank }}
+              当前排名 #{{ userRank }}
             </n-tag>
           </div>
         </div>
 
         <div class="weights-display">
-          <h3>Current Weights (Total: 10,000)</h3>
+          <h3>权重配置（总计 10,000）</h3>
           <div class="weights-grid">
             <div v-for="(weight, key) in weights" :key="key" class="weight-item">
               <div class="weight-label">{{ getWeightLabel(key) }}</div>
@@ -93,7 +93,7 @@
 
         <!-- Formula Explanation -->
         <n-collapse class="formula-section">
-          <n-collapse-item title="💡 Calculation Formula" name="formula">
+          <n-collapse-item title="💡 影响力计算公式" name="formula">
             <div class="formula-content">
               <div class="formula-equation">
                 <code>
@@ -104,7 +104,7 @@
               </div>
               
               <div class="current-calculation">
-                <h4>Your Current Calculation:</h4>
+                <h4>当前贡献分解：</h4>
                 <div class="calc-breakdown">
                   <div v-for="(score, key) in scores" :key="key" class="calc-item">
                     <span class="calc-label">{{ getWeightLabel(key) }}:</span>
@@ -123,13 +123,13 @@
 
     <!-- Detailed Breakdown -->
     <div class="breakdown-sections">
-      <!-- Publication Score -->
+      <!-- 成果得分 -->
       <n-card class="section-card" title="📚 Publication Impact">
         <div class="section-content">
           <div class="section-header">
             <div class="score-summary">
               <span class="section-score">{{ scores.publication }}</span>
-              <span class="section-label">Publication Score</span>
+              <span class="section-label">成果得分</span>
             </div>
           </div>
           
@@ -168,13 +168,13 @@
         </div>
       </n-card>
 
-      <!-- Review Score -->
+      <!-- 评审得分 -->
       <n-card class="section-card" title="🔍 Review Contribution">
         <div class="section-content">
           <div class="section-header">
             <div class="score-summary">
               <span class="section-score">{{ scores.review }}</span>
-              <span class="section-label">Review Score</span>
+              <span class="section-label">评审得分</span>
             </div>
           </div>
           
@@ -208,7 +208,7 @@
           <div class="section-header">
             <div class="score-summary">
               <span class="section-score">{{ scores.data }}</span>
-              <span class="section-label">Data Score</span>
+              <span class="section-label">数据贡献得分</span>
             </div>
           </div>
           
@@ -253,13 +253,13 @@
         </div>
       </n-card>
 
-      <!-- Collaboration Score -->
+      <!-- 协同合作得分 -->
       <n-card class="section-card" title="🤝 Collaboration">
         <div class="section-content">
           <div class="section-header">
             <div class="score-summary">
               <span class="section-score">{{ scores.collaboration }}</span>
-              <span class="section-label">Collaboration Score</span>
+              <span class="section-label">协同合作得分</span>
             </div>
           </div>
           
@@ -287,34 +287,34 @@
         </div>
       </n-card>
 
-      <!-- Governance Score -->
+      <!-- 治理得分 -->
       <n-card class="section-card" title="🏛️ Governance Participation">
         <div class="section-content">
           <div class="section-header">
             <div class="score-summary">
               <span class="section-score">{{ scores.governance }}</span>
-              <span class="section-label">Governance Score</span>
+              <span class="section-label">治理得分</span>
             </div>
           </div>
           
           <div class="governance-info">
             <div class="role-display">
-              <span class="role-label">Current Role:</span>
+              <span class="role-label">当前身份：</span>
               <n-tag :type="getRoleType(userRole)" size="large">
                 <template #icon>
                   <n-icon :component="ShieldCheckmarkOutline" />
                 </template>
-                {{ userRole }}
+                {{ roleDisplay }}
               </n-tag>
             </div>
             
             <div class="governance-breakdown">
               <div class="score-item">
-                <span class="item-label">Base Score:</span>
+                <span class="item-label">基础分：</span>
                 <span class="item-value">50</span>
               </div>
               <div class="score-item" v-if="userRole !== 'User'">
-                <span class="item-label">Role Bonus:</span>
+                <span class="item-label">角色加成：</span>
                 <span class="item-value">+50</span>
               </div>
             </div>
@@ -322,8 +322,7 @@
           
           <div class="governance-explanation">
             <p>
-              <strong>Scoring:</strong> Base 50 points for all users. 
-              Reviewers and Institutions receive additional 50 points (total 100).
+              <strong>计分说明：</strong> 所有参赛者默认 50 分，评审员与机构类账号额外享有 +50 加成。
             </p>
           </div>
         </div>
@@ -347,7 +346,7 @@ const message = useMessage();
 // Reactive data
 const userAddress = ref('');
 const userStatus = ref('Verified');
-const networkName = ref('Ethereum Mainnet');
+const networkName = ref('Hardhat（本地）');
 const lastUpdateTime = ref(new Date());
 const isUpdating = ref(false);
 const userRank = ref(null);
@@ -385,6 +384,25 @@ const collaborationStats = ref({
 });
 const userRole = ref('User');
 
+const statusDisplay = computed(() => {
+  const map = {
+    Verified: '已验证',
+    Pending: '待审核',
+    Rejected: '已驳回'
+  };
+  return map[userStatus.value] || '未连接';
+});
+
+const roleDisplay = computed(() => {
+  const map = {
+    User: '研究员',
+    Reviewer: '评审员',
+    Institution: '科研机构',
+    Admin: '管理员'
+  };
+  return map[userRole.value] || '研究员';
+});
+
 // Computed values
 const totalInfluence = computed(() => {
   return Math.floor(
@@ -414,7 +432,7 @@ const loadCurrentUser = () => {
 
 const updateInfluence = async () => {
   if (!userAddress.value) {
-    message.warning('Please connect your wallet first');
+    message.warning('请先连接钱包');
     return;
   }
 
@@ -427,10 +445,10 @@ const updateInfluence = async () => {
     await loadInfluenceData();
     
     lastUpdateTime.value = new Date();
-    message.success('Influence updated successfully!');
+    message.success('影响力数据已更新');
   } catch (error) {
     console.error('Failed to update influence:', error);
-    message.error('Failed to update influence');
+    message.error('影响力更新失败，请稍后再试');
   } finally {
     isUpdating.value = false;
   }
@@ -442,7 +460,7 @@ const loadInfluenceData = async () => {
     loadMockData();
   } catch (error) {
     console.error('Failed to load influence data:', error);
-    message.error('Failed to load influence data');
+    message.error('影响力数据加载失败');
   }
 };
 
@@ -527,11 +545,11 @@ const loadMockData = () => {
 // Helper methods
 const getWeightLabel = (key) => {
   const labels = {
-    publication: 'Publication',
-    review: 'Review',
-    data: 'Data',
-    collaboration: 'Collaboration',
-    governance: 'Governance'
+    publication: '成果发布',
+    review: '同行评审',
+    data: '数据贡献',
+    collaboration: '协同合作',
+    governance: '治理参与'
   };
   return labels[key] || key;
 };

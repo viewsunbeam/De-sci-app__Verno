@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./DeSciRegistry.sol";
 import "./DatasetManager.sol";
 import "./ResearchNFT.sol";
@@ -119,7 +119,7 @@ contract InfluenceRanking is Ownable, ReentrancyGuard {
         address _datasetManager,
         address payable _researchNFT,
         address _zkpVerifier
-    ) Ownable() {
+    ) Ownable(msg.sender) {
         userRegistry = DeSciRegistry(_userRegistry);
         datasetManager = DatasetManager(_datasetManager);
         researchNFT = ResearchNFT(_researchNFT);

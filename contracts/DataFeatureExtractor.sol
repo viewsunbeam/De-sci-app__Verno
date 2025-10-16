@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
@@ -104,7 +104,7 @@ contract DataFeatureExtractor is Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor() Ownable() {
+    constructor() Ownable(msg.sender) {
         nextFeatureId = 1;
         authorizedCalculators[msg.sender] = true;
     }

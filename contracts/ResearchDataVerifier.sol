@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./ZKProof.sol";
 // import "./Dataset.sol"; // Removed unused import
@@ -95,7 +95,7 @@ contract ResearchDataVerifier is Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor() Ownable() {
+    constructor() Ownable(msg.sender) {
         nextDataId = 1;
         
         // Initialize default constraints

@@ -1,0 +1,108 @@
+services:
+  hardhat:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    command: ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
+    environment:
+      - LOCALHOST_RPC_URL=http://0.0.0.0:8545
+    ports:
+      - "8545:8545"
+    volumes:
+      - hardhat-cache:/app/cache
+      - hardhat-artifacts:/app/artifacts
+      - contracts-data:/shared/contracts
+
+  contracts:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    depends_on:
+      hardhat:
+        condition: service_started
+    command: ["bash", "-c", "node scripts/wait-for-rpc.js && npm run deploy-contracts"]
+    environment:
+      - BLOCKCHAIN_RPC_URL=http://hardhat:8545
+      - LOCALHOST_RPC_URL=http://hardhat:8545
+      - FRONTEND_CONTRACTS_PATH=/shared/contracts/contracts.json
+      - GO_CONTRACTS_DIR=/shared/contracts/abis
+      - SHARED_CONTRACTS_PATH=/shared/contracts/contracts.json
+    volumes:
+      - hardhat-cache:/app/cache
+      - hardhat-artifacts:/app/artifacts
+      - contracts-data:/shared/contracts
+    restart: "no"
+
+  chain-api:
+    build:
+      context: services/chain-api
+      dockerfile: Dockerfile
+    depends_on:
+      hardhat:
+        condition: service_started
+      contracts:
+        condition: service_completed_successfully
+    environment:
+      - PORT=8088
+      - ETHEREUM_RPC=http://hardhat:8545
+      - DATABASE_URL=sqlite:///data/chain-api.db
+      - CONTRACTS_CONFIG_PATH=/shared/contracts/contracts.json
+    volumes:
+      - contracts-data:/shared/contracts
+      - chain-api-data:/data
+    ports:
+      - "8088:8088"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8088/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    depends_on:
+      hardhat:
+        condition: service_started
+      contracts:
+        condition: service_completed_successfully
+      chain-api:
+        condition: service_healthy
+    command: ["npm", "start"]
+    env_file:
+      - .env
+    environment:
+      - BLOCKCHAIN_RPC_URL=http://hardhat:8545
+      - CHAIN_API_BASE_URL=http://chain-api:8088
+      - CONTRACTS_CONFIG_PATH=/shared/contracts/contracts.json
+      - SQLITE_DB_PATH=/data/desci.db
+    volumes:
+      - contracts-data:/shared/contracts
+      - backend-data:/data
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    command: ["npm", "run", "dev", "--prefix", "frontend", "--", "--host", "0.0.0.0", "--port", "5173"]
+    environment:
+      - VITE_API_BASE=http://backend:3000
+      - CONTRACTS_CONFIG_PATH=/shared/contracts/contracts.json
+    depends_on:
+      backend:
+        condition: service_started
+    volumes:
+      - contracts-data:/shared/contracts
+    ports:
+      - "5173:5173"
+
+volumes:
+  hardhat-cache:
+  hardhat-artifacts:
+  contracts-data:
+  chain-api-data:
+  backend-data:

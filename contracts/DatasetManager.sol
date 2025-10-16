@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title DatasetManager
@@ -131,12 +131,12 @@ contract DatasetManager is ERC721, Ownable, ReentrancyGuard {
         uint256 platformShare
     );
     
-    constructor() ERC721("DeSci Dataset", "DSDT") Ownable() {}
+    constructor() ERC721("DeSci Dataset", "DSDT") Ownable(msg.sender) {}
     
     /**
      * @dev 检查数据集是否存在
      */
-    function _exists(uint256 tokenId) internal view override returns (bool) {
+    function _exists(uint256 tokenId) internal view returns (bool) {
         return tokenId > 0 && tokenId <= _datasetIds && datasets[tokenId].owner != address(0);
     }
     

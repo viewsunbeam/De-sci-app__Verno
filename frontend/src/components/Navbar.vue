@@ -5,23 +5,23 @@
     </div>
     <div class="navbar-center">
        <n-dropdown trigger="hover" :options="projectOptions" @select = 'handleDropdownSelect'>
-        <n-a href="#">Projects</n-a>
+        <n-a href="#">科研项目</n-a>
       </n-dropdown>
       <n-dropdown trigger="hover" :options="datasetOptions" @select = 'handleDropdownSelect'>
-        <n-a href="#">Datasets</n-a>
+        <n-a href="#">数据集</n-a>
       </n-dropdown>
       <router-link to="/influence" class="nav-link">
-        <n-a href="#">Influence</n-a>
+        <n-a href="#">影响力榜单</n-a>
       </router-link>
-      <n-a href="#">Community</n-a>
-      <n-a href="#">Docs</n-a>
+      <n-a href="#">竞赛路演</n-a>
+      <n-a href="#">文档</n-a>
     </div>
     <div class="navbar-right">
-      <n-input placeholder="Search..." round clearable class="search-bar" />
+      <n-input placeholder="搜索项目 / 数据集" round clearable class="search-bar" />
       
       <!-- Web3 Connect Button -->
       <div v-if="!isConnected" @click="handleConnect">
-        <n-button type="primary">Connect Wallet</n-button>
+        <n-button type="primary">连接钱包</n-button>
       </div>
       <div v-else>
         <n-dropdown trigger="click" :options="userDropdownOptions" @select="handleUserDropdownSelect">
@@ -101,9 +101,9 @@ const tryFallbackUserData = async () => {
 };
 
 const userDropdownOptions = computed(() => [
-  { label: 'Go to Dashboard', key: 'dashboard' },
+  { label: '进入控制台', key: 'dashboard' },
   { type: 'divider', key: 'd1' },
-  { label: 'Disconnect', key: 'disconnect' },
+  { label: '断开连接', key: 'disconnect' },
 ]);
 
 const testUserOptions = [
@@ -173,13 +173,13 @@ const handleDropdownSelect = (key) => {
 
 // --- Static Dropdown Options ---
 const projectOptions = [
-  { label: 'Explore All Projects', key: '/explore' },
-  { label: 'Start a New Project', key: '/projects' }
+  { label: '浏览所有项目', key: '/explore' },
+  { label: '创建竞赛项目', key: '/projects' }
 ];
 
 const datasetOptions = [
-  { label: 'Browse Datasets', key: '/explore' },
-  { label: 'Submit a Dataset', key: '/datasets/upload' }
+  { label: '查看数据集', key: '/explore' },
+  { label: '提交数据集', key: '/datasets/upload' }
 ];
 </script>
 

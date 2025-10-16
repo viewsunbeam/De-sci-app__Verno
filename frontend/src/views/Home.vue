@@ -3,11 +3,11 @@
     <Navbar />
     <n-layout-content class="main-content">
       <div class="hero-section">
-        <n-h1>Welcome to Verno</n-h1>
-        <n-p>A decentralized platform for verifiable research.</n-p>
+        <n-h1>Verno · CCF 竞赛版</n-h1>
+        <n-p>第四届 CCF 大学生区块链技术与创新应用竞赛参赛作品，呈现“链上可信 · 链下高效”的科研全流程。</n-p>
         <div class="hero-actions">
             <n-button type="primary" size="large" @click="$router.push('/dashboard')">
-               Get Started
+               进入控制台
              </n-button>
           <n-button
             ghost
@@ -15,28 +15,28 @@
             style="margin-left: 12px"
             @click="$router.push('/explore')"
           >
-            Explore Projects
+            浏览成果集
           </n-button>
         </div>
       </div>
 
       <!-- New Features Section -->
       <div class="features-section">
-        <n-h2>Why Verno?</n-h2>
+        <n-h2>竞赛亮点</n-h2>
         <n-grid x-gap="24" y-gap="24" :cols="3">
           <n-gi>
-            <n-card title="Verifiable Ownership">
-              Mint your research outputs as dNFTs to establish immutable, on-chain proof of ownership.
+            <n-card title="链上确权">
+              将科研成果铸造成 dNFT，生成不可篡改的链上凭证，支持竞赛评审快速核验。
             </n-card>
           </n-gi>
           <n-gi>
-            <n-card title="Decentralized Collaboration">
-              Create or join research projects with transparent, trustless collaboration models.
+            <n-card title="链下高效协同">
+              数据上链 Hash，全文存储在链下数据库，兼顾性能与隐私，适配真实科研场景。
             </n-card>
           </n-gi>
           <n-gi>
-            <n-card title="Transparent Peer Review">
-              Participate in an open and fair peer-review process, where contributions are rewarded.
+            <n-card title="公开评审激励">
+              面向评审专家的透明评分与奖励机制，完整展示贡献、积分与激励的闭环。
             </n-card>
           </n-gi>
         </n-grid>
@@ -44,9 +44,9 @@
 
       <!-- New Highlights Section -->
       <div class="highlights-section">
-         <n-h2>From Datasets to Discoveries</n-h2>
-         <n-p>Explore a universe of knowledge, from raw data to groundbreaking papers, all interconnected in our knowledge graph.</n-p>
-         <n-button type="tertiary" size="large">Explore the Graph</n-button>
+         <n-h2>竞赛场景演示</n-h2>
+         <n-p>涵盖数据集上传、零知识验证、成果发布与代币激励，完整呈现团队（周子为 / 张家畅 / 朱妍琦 / 李佳凝）提交的竞赛方案。</n-p>
+         <n-button type="tertiary" size="large" @click="$router.push('/roadmap')">查看 Demo 指南</n-button>
       </div>
 
     </n-layout-content>

@@ -8,10 +8,12 @@
     "dev": "concurrently \"cd frontend && npm run dev\" \"npm start\"",
     "install-all": "npm install && cd frontend && npm install",
     "build": "cd frontend && npm run build",
-    "deploy-contracts": "npx hardhat run deployEnhancedDeSci.js --network localhost",
+    "deploy-contracts": "npx hardhat run deployEnhancedDeSci.js --network localhost && npm run sync-contracts",
     "start-blockchain": "npx hardhat node",
     "start-full": "./start-platform.sh",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sync-contracts": "node scripts/sync-contracts.js",
+    "chain-api:start": "cd services/chain-api && go run cmd/server/main_simple.go"
   },
   "keywords": [
     "decentralized-science",
@@ -41,7 +43,7 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.1.0",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.1.1",
-    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/contracts": "^5.4.0",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.20",

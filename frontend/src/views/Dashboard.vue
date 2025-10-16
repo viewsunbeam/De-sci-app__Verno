@@ -3,14 +3,14 @@
     <!-- Profile Completion Alert -->
     <n-alert
       v-if="user && !isProfileComplete"
-      title="Complete Your Profile"
+      title="完善竞赛档案"
       type="info"
       class="profile-alert"
     >
-                To get the most out of Verno, please take a moment to complete your user profile.
+                为了完整展示参赛身份和科研履历，请补充个人档案信息。
       <template #action>
         <n-button type="primary" size="small" @click="goToProfile">
-          Go to Profile
+          前往完善
         </n-button>
       </template>
     </n-alert>
@@ -18,52 +18,52 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <n-spin size="large" />
-      <p class="loading-text">Loading dashboard data...</p>
+      <p class="loading-text">正在加载竞赛数据...</p>
     </div>
 
     <!-- Stats Cards -->
     <n-grid v-else x-gap="24" y-gap="24" :cols="4" style="margin-bottom: 24px;">
       <n-gi>
-        <n-card title="My Projects" class="stats-card projects-card">
+        <n-card title="我的项目" class="stats-card projects-card">
           <template #header-extra>
             <n-icon :component="FolderOutline" class="card-icon projects-icon" />
           </template>
-          <n-statistic label="Active" :value="dashboardStats?.projects?.active || 0" />
+          <n-statistic label="活跃项目" :value="dashboardStats?.projects?.active || 0" />
           <template #footer>
             <n-text depth="3" style="font-size: 12px;">
-              Total: {{ dashboardStats?.projects?.total || 0 }}
+              合计：{{ dashboardStats?.projects?.total || 0 }}
             </n-text>
           </template>
         </n-card>
       </n-gi>
       <n-gi>
-        <n-card title="Contributions" class="stats-card contributions-card">
+        <n-card title="评审贡献" class="stats-card contributions-card">
           <template #header-extra>
             <n-icon :component="PeopleOutline" class="card-icon contributions-icon" />
           </template>
-          <n-statistic label="Reviews" :value="dashboardStats?.reviews || 0" />
+          <n-statistic label="评审数" :value="dashboardStats?.reviews || 0" />
         </n-card>
       </n-gi>
       <n-gi>
-        <n-card title="Citations" class="stats-card citations-card">
+        <n-card title="引用反馈" class="stats-card citations-card">
           <template #header-extra>
             <n-icon :component="DocumentTextOutline" class="card-icon citations-icon" />
           </template>
-          <n-statistic label="Total" :value="dashboardStats?.citations || 0" />
+          <n-statistic label="累计引用" :value="dashboardStats?.citations || 0" />
         </n-card>
       </n-gi>
       <n-gi>
-        <n-card title="Influence" class="stats-card influence-card clickable-card" @click="goToInfluence">
+        <n-card title="影响力榜单" class="stats-card influence-card clickable-card" @click="goToInfluence">
           <template #header-extra>
             <n-icon :component="TrophyOutline" class="card-icon influence-icon" />
           </template>
           <n-statistic 
-            label="Score" 
+            label="综合得分" 
             :value="dashboardStats?.influence || 1250" 
           />
           <template #footer>
             <n-text depth="3" style="font-size: 12px;">
-              Scientific Impact
+              Scientific Impact Index
             </n-text>
           </template>
         </n-card>
@@ -71,7 +71,7 @@
     </n-grid>
 
     <!-- Recent Activity List -->
-    <n-card title="Recent Activity" class="activity-card">
+    <n-card title="最新活动" class="activity-card">
       <template #header-extra>
         <n-icon :component="TimeOutline" class="card-icon activity-icon" />
       </template>

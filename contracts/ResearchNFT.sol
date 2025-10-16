@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title ResearchNFT
@@ -142,7 +142,7 @@ contract ResearchNFT is ERC721URIStorage, Ownable, ReentrancyGuard {
         uint256 totalAmount
     );
     
-    constructor() ERC721("DeSci Research NFT", "DSRN") Ownable() {
+    constructor() ERC721("DeSci Research NFT", "DSRN") Ownable(msg.sender) {
         // 初始化类型权重
         typeWeights[PublicationType.Paper] = 100;
         typeWeights[PublicationType.Patent] = 120;
@@ -163,7 +163,7 @@ contract ResearchNFT is ERC721URIStorage, Ownable, ReentrancyGuard {
     /**
      * @dev 检查科研成果是否存在
      */
-    function _exists(uint256 tokenId) internal view override returns (bool) {
+    function _exists(uint256 tokenId) internal view returns (bool) {
         return tokenId > 0 && tokenId <= _tokenIds && researches[tokenId].timestamp != 0;
     }
     

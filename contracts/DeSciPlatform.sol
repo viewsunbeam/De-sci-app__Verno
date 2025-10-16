@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./DeSciRegistry.sol";
@@ -16,7 +16,7 @@ import "./ZKPVerifier.sol";
  * @dev 平台治理代币
  */
 contract SciToken is ERC20, Ownable {
-    constructor() ERC20("Science Token", "SCI") Ownable() {
+    constructor() ERC20("Science Token", "SCI") Ownable(msg.sender) {
         _mint(msg.sender, 1000000 * 10**decimals()); // 100万代币
     }
     
@@ -122,7 +122,7 @@ contract DeSciPlatform is Ownable, ReentrancyGuard, IERC721Receiver {
         address payable _researchNFT,
         address _influenceRanking,
         address _zkpVerifier
-    ) Ownable() {
+    ) Ownable(msg.sender) {
         userRegistry = DeSciRegistry(_userRegistry);
         datasetManager = DatasetManager(_datasetManager);
         researchNFT = ResearchNFT(_researchNFT);

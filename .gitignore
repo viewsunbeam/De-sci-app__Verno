@@ -40,10 +40,15 @@ logs/
 uploads/
 public/uploads/
 
-# Databases (uncomment if you do NOT want to track local DBs)
-# *.db
-# *.sqlite
-# *.sqlite3
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Go build & coverage artifacts
+services/chain-api/*.out
+services/chain-api/main_simple
+services/chain-api/demo-server
 
 # Frontend
 frontend/node_modules/

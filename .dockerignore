@@ -1,0 +1,17 @@
+.git
+.gitignore
+node_modules
+frontend/node_modules
+services/chain-api/node_modules
+services/chain-api/bin
+npm-debug.log
+pnpm-debug.log
+yarn-error.log
+artifacts
+cache
+desci.db
+frontend/dist
+coverage
+Dockerfile*
+docker-compose.yml
+.env
