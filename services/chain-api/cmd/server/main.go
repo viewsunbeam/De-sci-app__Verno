@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -66,7 +67,13 @@ func main() {
 	}
 
 	if len(validAddresses) > 0 {
-		eventListener, err := listener.NewEventListener(cfg.EthereumRPC, validAddresses, cfg.StartBlock)
+		// 从数据库续接区块高度（优先使用DB记录，其次使用配置）
+		resumeBlock := cfg.StartBlock
+		if lastBlock, err := repo.GetLastEventBlock(); err == nil && lastBlock > resumeBlock {
+			resumeBlock = lastBlock + 1
+		}
+
+		eventListener, err := listener.NewEventListener(cfg.EthereumRPC, validAddresses, resumeBlock, cfg.ContractsConfigPath)
 		if err != nil {
 			log.Printf("⚠️  Failed to create event listener: %v", err)
 			log.Println("🚀 Starting server without blockchain listener...")
@@ -77,78 +84,84 @@ func main() {
 			eventListener.SetEventHandler(func(event *model.ParsedEvent) error {
 				log.Printf("📡 Processing blockchain event: %s", event.EventName)
 
-				// 首先插入事件日志到 event_logs 表
+				// 规范化事件名称
+				normalized := event.EventName
+				switch event.EventName {
+				case "ResearchMinted":
+					normalized = "ResearchCreated"
+				case "DatasetUploaded":
+					normalized = "DatasetCreated"
+				}
+
+				// 构造标准化载荷
+				var payload map[string]interface{}
+				switch normalized {
+				case "ResearchCreated":
+					payload = map[string]interface{}{
+						"tokenId":      event.TokenID,
+						"authors": func() []string {
+							if len(event.Authors) > 0 { return event.Authors }
+							if event.Author != "" { return []string{event.Author} }
+							return []string{}
+						}(),
+						"title":        event.Title,
+						"contentHash":  event.DataHash,
+						"metadataHash": event.MetadataHash,
+					}
+				case "DatasetCreated":
+					payload = map[string]interface{}{
+						"datasetId":   event.TokenID,
+						"title":       event.Title,
+						"description": event.Description,
+						"owner":       event.Author,
+						"ipfsHash":    event.DataHash,
+					}
+				default:
+					payload = map[string]interface{}{
+						"tokenId":     event.TokenID,
+						"title":       event.Title,
+						"description": event.Description,
+					}
+				}
+
+				b, err := json.Marshal(payload)
+				if err != nil {
+					log.Printf("⚠️  Failed to marshal event payload: %v", err)
+					return err
+				}
+
+				// 插入事件日志到 event_logs 表
 				eventLog := &model.EventLog{
 					TxHash:       event.TxHash,
 					LogIndex:     uint(event.LogIndex),
 					BlockNumber:  event.Block,
-					EventName:    event.EventName,
-					ContractAddr: event.Author, // 使用Author字段作为合约地址
-					PayloadRaw:   `{"tokenId":"` + event.TokenID + `","title":"` + event.Title + `","description":"` + event.Description + `"}`,
+					EventName:    normalized,
+					ContractAddr: event.Contract,
+					PayloadRaw:   string(b),
 					Processed:    false,
 					CreatedAt:    time.Now(),
 				}
 
-				// 插入事件日志
 				if err := repo.InsertEventLog(eventLog); err != nil {
 					log.Printf("⚠️  Failed to insert event log: %v", err)
-				} else {
-					log.Printf("📝 Event log inserted: %s", event.EventName)
+					return err
 				}
+				log.Printf("📝 Event log inserted: %s", normalized)
 
-				// 根据事件类型处理数据库操作
-				switch event.EventName {
-				case "UserRegistered":
-					log.Printf("💾 Syncing user registration event to database...")
-					log.Printf("✅ User event processed: %s", event.TokenID)
-
-				case "DatasetUploaded":
-					log.Printf("💾 Syncing dataset upload event to database...")
-					log.Printf("✅ Dataset event processed: %s", event.TokenID)
-
-				case "ResearchMinted", "ResearchCreated":
-					log.Printf("💾 Syncing research NFT event to database...")
-
-					// 使用唯一TokenID（避免重复）
-					uniqueTokenID := event.TokenID + "-" + string(rune(int('A')+int(event.Block%26)))
-
-					// 创建研究数据记录
-					researchData := &model.ResearchData{
-						TokenID:      uniqueTokenID,
-						Title:        event.Title,
-						Authors:      []string{event.Author}, // 简化处理
-						ContentHash:  event.DataHash,
-						MetadataHash: event.DataHash, // 简化处理
-						BlockNumber:  event.Block,
-						CreatedAt:    time.Now(),
-						UpdatedAt:    time.Now(),
-					}
-
-					log.Printf("🔍 Attempting to insert: TokenID=%s, Title=%s, Block=%d",
-						researchData.TokenID, researchData.Title, researchData.BlockNumber)
-
-					// 插入数据库
-					if err := repo.InsertResearchData(researchData); err != nil {
-						log.Printf("❌ Failed to sync research data: %v", err)
-						return err
-					}
-
-					log.Printf("✅ Research data synced: TokenID=%s, Block=%d", researchData.TokenID, event.Block)
-
-				default:
-					log.Printf("⚠️  Unknown event type: %s", event.EventName)
-					log.Printf("✅ Event logged: %s", event.TokenID)
-				}
-
-				// 调用Service层处理（如果事件类型匹配）
-				if event.EventName == "ResearchMinted" || event.EventName == "ResearchCreated" {
-					// 确保事件名称为Service层期望的名称
-					eventLog.EventName = "ResearchCreated"
+				// 交由服务层处理，并标记处理完成
+				switch normalized {
+				case "ResearchCreated", "DatasetCreated":
 					if err := svc.ProcessEvent(eventLog); err != nil {
 						log.Printf("⚠️  Service processing failed: %v", err)
-					} else {
-						log.Printf("✅ Service processed event successfully")
+						return err
 					}
+					if err := repo.MarkEventProcessed(eventLog.ID); err != nil {
+						log.Printf("⚠️  Mark processed failed: %v", err)
+					} else {
+						log.Printf("✅ Service processed and marked event: %s", normalized)
+					}
+				default:
+					log.Printf("ℹ️  Event logged only: %s", normalized)
 				}
 
 				return nil

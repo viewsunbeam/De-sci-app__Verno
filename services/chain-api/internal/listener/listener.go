@@ -4,8 +4,13 @@ import (
 	"context"
 	"log"
 	"math/big"
+	"encoding/json"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -21,9 +26,10 @@ type EventListener struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
 	eventHandler func(*model.ParsedEvent) error
+	contractABIs map[string]*abi.ABI
 }
 
-func NewEventListener(rpcURL string, contractAddresses []string, startBlock uint64) (*EventListener, error) {
+func NewEventListener(rpcURL string, contractAddresses []string, startBlock uint64, contractsConfigPath string) (*EventListener, error) {
 	client, err := ethclient.Dial(rpcURL)
 	if err != nil {
 		return nil, err
@@ -36,6 +42,8 @@ func NewEventListener(rpcURL string, contractAddresses []string, startBlock uint
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	abis, _ := loadContractABIs(contractsConfigPath)
+
 	return &EventListener{
 		client:     client,
 		contracts:  contracts,
@@ -43,6 +51,7 @@ func NewEventListener(rpcURL string, contractAddresses []string, startBlock uint
 		eventChan:  make(chan types.Log, 100),
 		ctx:        ctx,
 		cancel:     cancel,
+		contractABIs: abis,
 	}, nil
 }
 
@@ -91,34 +100,45 @@ func (el *EventListener) processHistoricalEvents() {
 }
 
 func (el *EventListener) subscribeToNewEvents() {
-	query := ethereum.FilterQuery{
-		Addresses: el.contracts,
-	}
-
-	logs := make(chan types.Log)
-	sub, err := el.client.SubscribeFilterLogs(el.ctx, query, logs)
-	if err != nil {
-		log.Printf("Error subscribing to logs: %v", err)
-		return
-	}
-
-	log.Println("Subscribed to new events...")
-	defer sub.Unsubscribe()
-
 	for {
-		select {
-		case err := <-sub.Err():
-			log.Printf("Subscription error: %v", err)
-			return
-		case vLog := <-logs:
-			log.Printf("New event received: block %d, tx %s", vLog.BlockNumber, vLog.TxHash.Hex())
+		query := ethereum.FilterQuery{Addresses: el.contracts}
+		logsCh := make(chan types.Log, 100)
+		sub, err := el.client.SubscribeFilterLogs(el.ctx, query, logsCh)
+		if err != nil {
+			log.Printf("Error subscribing to logs: %v", err)
 			select {
-			case el.eventChan <- vLog:
+			case <-time.After(3 * time.Second):
+				continue
 			case <-el.ctx.Done():
 				return
 			}
-		case <-el.ctx.Done():
-			return
+		}
+
+		log.Println("Subscribed to new events...")
+
+		for {
+			select {
+			case err := <-sub.Err():
+				log.Printf("Subscription error: %v", err)
+				sub.Unsubscribe()
+				select {
+				case <-time.After(2 * time.Second):
+					break
+				case <-el.ctx.Done():
+					return
+				}
+				break
+			case vLog := <-logsCh:
+				log.Printf("New event received: block %d, tx %s", vLog.BlockNumber, vLog.TxHash.Hex())
+				select {
+				case el.eventChan <- vLog:
+				case <-el.ctx.Done():
+					return
+				}
+			case <-el.ctx.Done():
+				sub.Unsubscribe()
+				return
+			}
 		}
 	}
 }
@@ -138,50 +158,86 @@ func (el *EventListener) processEvents() {
 	}
 }
 
-// 改进的事件解析 - 识别真实事件类型
 func (el *EventListener) parseAndHandleEvent(vLog types.Log) error {
 	if el.eventHandler == nil {
 		log.Println("No event handler set, skipping event")
 		return nil
 	}
 
-	// 根据事件签名识别事件类型
 	eventName := "UnknownEvent"
-	var parsedEvent *model.ParsedEvent
+	title := ""
+	tokenStr := ""
+	authorAddr := ""
+	var authors []string
+	contractAddr := vLog.Address.Hex()
 
-	// 常见的事件签名哈希 (keccak256)
-	userRegisteredSig := "0x3b9ca114c5e7a7e9b44a9fe1b1de564ca7c84e1b8f3f9c8f6b5e2f7a8c9d0e1f"
-	datasetUploadedSig := "0x4c8a115d6e8b8e0b55a0ef2b2ce675db8d94f2c9f4f0d9e7c6b6e3f8a9ca1e2f"
-	researchMintedSig := "0x5d9b216e7f9c9f1c66b1f03b3df786ec9ea5f3dafaf1eaf8d7c7f4f9bada2f3f"
-
-	// 检查事件签名 (简化版本 - 实际应该解析ABI)
-	if len(vLog.Topics) > 0 {
-		switch vLog.Topics[0].Hex() {
-		case userRegisteredSig:
-			eventName = "UserRegistered"
-		case datasetUploadedSig:
-			eventName = "DatasetUploaded"
-		case researchMintedSig:
-			eventName = "ResearchMinted"
-		default:
-			// 根据合约地址和主题推断事件类型
-			if len(vLog.Data) > 0 {
-				eventName = el.guessEventType(vLog)
+	addrKey := strings.ToLower(vLog.Address.Hex())
+	if ab, ok := el.contractABIs[addrKey]; ok && len(vLog.Topics) > 0 {
+		for name, ev := range ab.Events {
+			if ev.ID == vLog.Topics[0] {
+				eventName = name
+				vals := map[string]interface{}{}
+				_ = ev.Inputs.UnpackIntoMap(vals, vLog.Data)
+				switch name {
+				case "ResearchMinted":
+					if len(vLog.Topics) > 1 {
+						bi := new(big.Int).SetBytes(vLog.Topics[1].Bytes())
+						tokenStr = bi.String()
+					}
+					if v, ok := vals["authors"]; ok {
+						if arr, ok2 := v.([]common.Address); ok2 && len(arr) > 0 {
+							authorAddr = arr[0].Hex()
+							for _, a := range arr {
+								authors = append(authors, a.Hex())
+							}
+						}
+					}
+					if v, ok := vals["title"].(string); ok {
+						title = v
+					}
+				case "DatasetUploaded":
+					if len(vLog.Topics) > 1 {
+						bi := new(big.Int).SetBytes(vLog.Topics[1].Bytes())
+						tokenStr = bi.String()
+					}
+					if len(vLog.Topics) > 2 {
+						authorAddr = common.HexToAddress(vLog.Topics[2].Hex()).Hex()
+					}
+					if v, ok := vals["title"].(string); ok {
+						title = v
+					}
+				case "UserRegistered":
+					if len(vLog.Topics) > 1 {
+						authorAddr = common.HexToAddress(vLog.Topics[1].Hex()).Hex()
+					}
+				}
+				break
 			}
 		}
 	}
 
-	// 创建解析后的事件
-	parsedEvent = &model.ParsedEvent{
-		TokenID:     vLog.TxHash.Hex()[:10], // 使用交易哈希前10位作为TokenID
-		Author:      vLog.Address.Hex(),     // 合约地址
-		DataHash:    vLog.TxHash.Hex(),      // 交易哈希作为数据哈希
+	if title == "" {
+		if eventName == "ResearchMinted" && tokenStr != "" {
+			title = "Research #" + tokenStr
+		} else if eventName == "DatasetUploaded" && tokenStr != "" {
+			title = "Dataset #" + tokenStr
+		} else {
+			title = "Blockchain Event"
+		}
+	}
+
+	parsedEvent := &model.ParsedEvent{
+		TokenID:     tokenStr,
+		Author:      authorAddr,
+		Authors:     authors,
+		Contract:    contractAddr,
+		DataHash:    vLog.TxHash.Hex(),
 		Block:       vLog.BlockNumber,
 		TxHash:      vLog.TxHash.Hex(),
 		LogIndex:    uint(vLog.Index),
 		EventName:   eventName,
-		Title:       el.generateTitleForEvent(eventName),
-		Description: el.generateDescriptionForEvent(eventName),
+		Title:       title,
+		Description: "",
 	}
 
 	log.Printf("📡 Processing event: %s, TokenID=%s, Block=%d", eventName, parsedEvent.TokenID, parsedEvent.Block)
@@ -237,4 +293,36 @@ func (el *EventListener) Stop() {
 
 func (el *EventListener) GetEventChannel() <-chan types.Log {
 	return el.eventChan
+}
+
+func loadContractABIs(configPath string) (map[string]*abi.ABI, error) {
+	result := map[string]*abi.ABI{}
+	if configPath == "" {
+		return result, nil
+	}
+	b, err := os.ReadFile(configPath)
+	if err != nil {
+		return result, err
+	}
+	var payload struct {
+		Contracts map[string]struct {
+			Address string          `json:"address"`
+			ABI     json.RawMessage `json:"abi"`
+		} `json:"contracts"`
+	}
+	if err := json.Unmarshal(b, &payload); err != nil {
+		return result, err
+	}
+	for _, c := range payload.Contracts {
+		if c.Address == "" || len(c.ABI) == 0 {
+			continue
+		}
+		ab, err := abi.JSON(strings.NewReader(string(c.ABI)))
+		if err != nil {
+			continue
+		}
+		result[strings.ToLower(common.HexToAddress(c.Address).Hex())] = &ab
+	}
+	return result, nil
+
 }

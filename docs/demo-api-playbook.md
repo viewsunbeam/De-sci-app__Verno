@@ -14,8 +14,14 @@ cd De-sci-app__Verno
 # 准备环境变量
 cp .env.example .env
 
-# 首选 Docker Compose 一键启动（约 1~2 分钟）
-docker compose up --build --detach
+# 启动方式 A：含前端（推荐评审使用）
+docker compose up --build -d
+
+# 启动方式 B：无前端（纯链下验证/后端测试）
+docker compose up --build -d hardhat contracts chain-api backend
+
+# 若之前执行过 docker compose down，需要重新起：
+docker compose up -d
 
 # 查看容器状态
 docker compose ps
@@ -31,6 +37,112 @@ docker compose ps
 
 ```bash
 docker compose down
+```
+
+若需重新部署合约并刷新共享 `contracts.json`（ABI/地址）：
+
+```bash
+docker compose run --rm contracts
+docker compose restart backend
+```
+
+---
+
+### 1.1 区块链快速验证（一次性授权 + 触发三事件）
+在项目根目录执行（Hardhat 容器内执行 Node 脚本）：
+```bash
+docker compose exec hardhat bash -lc 'node - <<'"'"'JS'"'"'
+const fs = require("fs");
+const { ethers } = require("ethers");
+async function waitFor(p,h){for(;;){const r=await p.send("eth_getTransactionReceipt",[h]);if(r)return r;await new Promise(r=>setTimeout(r,1000));}}
+(async () => {
+  const cfg=JSON.parse(fs.readFileSync("/shared/contracts/contracts.json","utf8"));
+  const platformAddr=cfg.contracts.DeSciPlatform.address, platformAbi=cfg.contracts.DeSciPlatform.abi;
+  const researchAddr=cfg.contracts.ResearchNFT.address, researchAbi=cfg.contracts.ResearchNFT.abi;
+  const provider=new ethers.JsonRpcProvider("http://hardhat:8545");
+  const [from]=(await provider.send("eth_accounts",[]));
+
+  // 授权 DeSciPlatform 可以代表作者铸造
+  let txHash=await provider.send("eth_sendTransaction",[{from,to:researchAddr,data:new ethers.Interface(researchAbi).encodeFunctionData("addAuthorizedContract",[platformAddr])}]);
+  await waitFor(provider,txHash);
+
+  // 触发注册 / 数据集上传 / 研究发表（会产生日志与入库）
+  const IF=new ethers.Interface(platformAbi);
+  txHash=await provider.send("eth_sendTransaction",[{from,to:platformAddr,data:IF.encodeFunctionData("registerUserWithReward",["Alice","Org","alice@example.com","AI","ipfs://creds",1])}]);
+  await waitFor(provider,txHash);
+  txHash=await provider.send("eth_sendTransaction",[{from,to:platformAddr,data:IF.encodeFunctionData("uploadDatasetWithReward",["Genome Data","desc",[],0,1024,"ipfs://data","ipfs://meta","",0,0])}]);
+  await waitFor(provider,txHash);
+  txHash=await provider.send("eth_sendTransaction",[{from,to:platformAddr,data:IF.encodeFunctionData("publishResearchWithReward",[[from],[10000],"Paper Title","Abstract",[],["General"],0,"0xAAA","0xBBB",true,0,""])}]);
+  await waitFor(provider,txHash);
+  process.exit(0);
+})().catch(e=>{console.error("SCRIPT_ERROR:",e);process.exit(1);});
+JS'
+```
+
+观察链下日志：
+```bash
+docker compose logs -f chain-api
+```
+预期包含：Subscribed to new events… / 📡 Processing … / 📝 Event log inserted: ResearchCreated / DatasetCreated / ✅ Service processed and marked event: …
+
+通过后端代理验证：
+```bash
+curl -fsS http://localhost:3000/api/chain/health | jq
+curl -fsS "http://localhost:3000/api/chain/research/latest?limit=10" | jq
+curl -fsS "http://localhost:3000/api/chain/research/by-author/0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266?limit=10" | jq
+```
+
+若需重新部署合约并刷新共享 `contracts.json`（ABI/地址）：
+
+```bash
+docker compose run --rm contracts
+docker compose restart backend
+```
+
+---
+
+### 1.1 区块链快速验证（一次性授权 + 触发三事件）
+在项目根目录执行（Hardhat 容器内执行 Node 脚本）：
+```bash
+docker compose exec hardhat bash -lc 'node - <<'"'"'JS'"'"'
+const fs = require("fs");
+const { ethers } = require("ethers");
+async function waitFor(p,h){for(;;){const r=await p.send("eth_getTransactionReceipt",[h]);if(r)return r;await new Promise(r=>setTimeout(r,1000));}}
+(async () => {
+  const cfg=JSON.parse(fs.readFileSync("/shared/contracts/contracts.json","utf8"));
+  const platformAddr=cfg.contracts.DeSciPlatform.address, platformAbi=cfg.contracts.DeSciPlatform.abi;
+  const researchAddr=cfg.contracts.ResearchNFT.address, researchAbi=cfg.contracts.ResearchNFT.abi;
+  const provider=new ethers.JsonRpcProvider("http://hardhat:8545");
+  const [from]=(await provider.send("eth_accounts",[]));
+
+  // 授权 DeSciPlatform 可以代表作者铸造
+  let txHash=await provider.send("eth_sendTransaction",[{from,to:researchAddr,data:new ethers.Interface(researchAbi).encodeFunctionData("addAuthorizedContract",[platformAddr])}]);
+  await waitFor(provider,txHash);
+
+  // 触发注册 / 数据集上传 / 研究发表（会产生日志与入库）
+  const IF=new ethers.Interface(platformAbi);
+  txHash=await provider.send("eth_sendTransaction",[{from,to:platformAddr,data:IF.encodeFunctionData("registerUserWithReward",["Alice","Org","alice@example.com","AI","ipfs://creds",1])}]);
+  await waitFor(provider,txHash);
+  txHash=await provider.send("eth_sendTransaction",[{from,to:platformAddr,data:IF.encodeFunctionData("uploadDatasetWithReward",["Genome Data","desc",[],0,1024,"ipfs://data","ipfs://meta","",0,0])}]);
+  await waitFor(provider,txHash);
+  txHash=await provider.send("eth_sendTransaction",[{from,to:platformAddr,data:IF.encodeFunctionData("publishResearchWithReward",[[from],[10000],"Paper Title","Abstract",[],["General"],0,"0xAAA","0xBBB",true,0,""])}]);
+  await waitFor(provider,txHash);
+  process.exit(0);
+})().catch(e=>{console.error("SCRIPT_ERROR:",e);process.exit(1);});
+JS'
+```
+
+观察链下日志：
+```bash
+docker compose logs -f chain-api
+```
+预期包含：Subscribed to new events… / 📡 Processing … / 📝 Event log inserted: ResearchCreated / DatasetCreated / ✅ Service processed and marked event: …
+
+通过后端代理验证：
+```bash
+curl -fsS http://localhost:3000/api/chain/health | jq
+curl -fsS "http://localhost:3000/api/chain/research/latest?limit=10" | jq
+curl -fsS "http://localhost:3000/api/chain/research/by-author/0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266?limit=10" | jq
 ```
 
 ---
