@@ -44,7 +44,7 @@ services:
         condition: service_completed_successfully
     environment:
       - PORT=8088
-      - ETHEREUM_RPC=http://hardhat:8545
+      - ETHEREUM_RPC=ws://hardhat:8545
       - DATABASE_URL=sqlite:///data/chain-api.db
       - CONTRACTS_CONFIG_PATH=/shared/contracts/contracts.json
     volumes:
