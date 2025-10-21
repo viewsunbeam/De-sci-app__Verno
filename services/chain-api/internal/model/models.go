@@ -82,15 +82,18 @@ type EventLog struct {
 
 // ParsedEvent 解析后的事件结构（用于事件监听）
 type ParsedEvent struct {
-	TokenID     string `json:"token_id"`
-	Author      string `json:"author"`
-	DataHash    string `json:"data_hash"`
-	Block       uint64 `json:"block"`
-	TxHash      string `json:"tx_hash"`
-	LogIndex    uint   `json:"log_index"`
-	EventName   string `json:"event_name"`
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
+	TokenID     string   `json:"token_id"`
+	Author      string   `json:"author"`
+	Contract    string   `json:"contract"`
+	Authors     []string `json:"authors,omitempty"`
+	DataHash    string   `json:"data_hash"`
+	MetadataHash string   `json:"metadata_hash,omitempty"`
+	Block       uint64   `json:"block"`
+	TxHash      string   `json:"tx_hash"`
+	LogIndex    uint     `json:"log_index"`
+	EventName   string   `json:"event_name"`
+	Title       string   `json:"title,omitempty"`
+	Description string   `json:"description,omitempty"`
 }
 
 // 复合唯一索引: tx_hash + log_index

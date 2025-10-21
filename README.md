@@ -1,4 +1,4 @@
-# <div align="center">
+<div align="center">
   <br/>
   <img src="https://img.alicdn.com/imgextra/i1/O1CN01QMMdMT1DfTbTJSNjl_!!6000000000227-2-tps-400-400.png" alt="Verno Logo" width="120">
   <h1>Verno · 去中心化科研平台</h1>
@@ -38,6 +38,7 @@
     </a>
   </p>
 </div>
+
 
 ---
 
