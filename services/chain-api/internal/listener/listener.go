@@ -169,7 +169,6 @@ func (el *EventListener) parseAndHandleEvent(vLog types.Log) error {
 	tokenStr := ""
 	authorAddr := ""
 	var authors []string
-	contractAddr := vLog.Address.Hex()
 
 	addrKey := strings.ToLower(vLog.Address.Hex())
 	if ab, ok := el.contractABIs[addrKey]; ok && len(vLog.Topics) > 0 {
@@ -229,8 +228,6 @@ func (el *EventListener) parseAndHandleEvent(vLog types.Log) error {
 	parsedEvent := &model.ParsedEvent{
 		TokenID:     tokenStr,
 		Author:      authorAddr,
-		Authors:     authors,
-		Contract:    contractAddr,
 		DataHash:    vLog.TxHash.Hex(),
 		Block:       vLog.BlockNumber,
 		TxHash:      vLog.TxHash.Hex(),

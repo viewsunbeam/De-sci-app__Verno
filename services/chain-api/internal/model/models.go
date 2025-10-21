@@ -7,17 +7,52 @@ import (
 	"time"
 )
 
-// ResearchData 研究数据表结构
+// ResearchData 研究数据记录
 type ResearchData struct {
-	ID           uint        `json:"id" gorm:"primaryKey"`
-	TokenID      string      `json:"token_id" gorm:"uniqueIndex;size:255"`
+	ID           uint        `gorm:"primaryKey" json:"id"`
+	TokenID      string      `gorm:"uniqueIndex" json:"token_id"`
 	Title        string      `json:"title"`
-	Authors      StringArray `json:"authors" gorm:"type:text[]"`
+	Authors      StringArray `gorm:"type:text" json:"authors"`
 	ContentHash  string      `json:"content_hash"`
 	MetadataHash string      `json:"metadata_hash"`
-	BlockNumber  uint64      `json:"block_number" gorm:"default:0"`
+	BlockNumber  uint64      `json:"block_number"`
 	CreatedAt    time.Time   `json:"created_at"`
 	UpdatedAt    time.Time   `json:"updated_at"`
+}
+
+// NodeJSNFT Node.js数据库中的NFT记录（用于数据对比）
+type NodeJSNFT struct {
+	ID              int       `gorm:"primaryKey" json:"id"`
+	ProjectID       int       `json:"project_id"`
+	TokenID         string    `json:"token_id"`
+	ContractAddress string    `json:"contract_address"`
+	MetadataURI     string    `json:"metadata_uri"`
+	OwnerID         int       `json:"owner_id"`
+	AssetType       string    `json:"asset_type"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+// NodeJSProject Node.js数据库中的项目记录
+type NodeJSProject struct {
+	ID          int       `gorm:"primaryKey" json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Visibility  string    `json:"visibility"`
+	Status      string    `json:"status"`
+	Category    string    `json:"category"`
+	OwnerID     int       `json:"owner_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// DataVerificationResult 数据验证结果
+type DataVerificationResult struct {
+	TokenID           string    `json:"token_id"`
+	IsConsistent      bool      `json:"is_consistent"`
+	NodeJSData        *NodeJSNFT `json:"nodejs_data"`
+	BlockchainData    *ResearchData `json:"blockchain_data"`
+	VerificationTime  time.Time `json:"verification_time"`
+	Issues            []string  `json:"issues,omitempty"`
 }
 
 // DatasetRecord 数据集记录表结构

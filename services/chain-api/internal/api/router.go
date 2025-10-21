@@ -4,28 +4,44 @@ import (
 	"net/http"
 	"strconv"
 
+	"desci-backend/internal/repository"
 	"desci-backend/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
 	service *service.Service
+	repo    repository.IRepository
 }
 
-func NewHandler(service *service.Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *service.Service, repo repository.IRepository) *Handler {
+	return &Handler{service: service, repo: repo}
 }
 
 func (h *Handler) SetupRoutes() *gin.Engine {
 	r := gin.Default()
 
+	// 添加CORS中间件
+	r.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		
+		c.Next()
+	})
+
 	// 健康检查
 	r.GET("/health", h.healthCheck)
 
-	// API路由组（按MVP范围说明）
+	// API路由组
 	api := r.Group("/api")
 	{
-		// 研究数据相关API
+		// 研究数据API
 		api.GET("/research/:id", h.getResearch)
 		api.GET("/research/latest", h.getLatestResearch)
 		api.GET("/research/by-author/:addr", h.getResearchByAuthor)
@@ -33,6 +49,20 @@ func (h *Handler) SetupRoutes() *gin.Engine {
 
 		// 数据集API（保留现有功能）
 		api.GET("/dataset/:datasetId", h.getDataset)
+	}
+
+	// 混合查询API路由组
+	hybridHandler := NewHybridHandler(h.repo)
+	hybrid := r.Group("/api/hybrid")
+	{
+		// NFT数据验证
+		hybrid.GET("/verify/:tokenId", hybridHandler.VerifyNFTData)
+		// 混合NFT列表
+		hybrid.GET("/nfts", hybridHandler.GetHybridNFTList)
+		// 项目统计
+		hybrid.GET("/stats", hybridHandler.GetProjectStats)
+		// 数据源对比
+		hybrid.GET("/compare", hybridHandler.CompareDataSources)
 	}
 
 	return r

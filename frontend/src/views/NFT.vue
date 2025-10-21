@@ -10,6 +10,12 @@
           </p>
         </div>
         <div class="header-actions">
+          <n-button @click="goToVerification" ghost>
+            <template #icon>
+              <n-icon :component="ShieldCheckmarkOutline" />
+            </template>
+            数据验证中心
+          </n-button>
           <n-button type="primary" @click="goToMintPage">
             <template #icon>
               <n-icon :component="AddOutline" />
@@ -412,7 +418,8 @@ import {
 } from 'naive-ui'
 import {
   AddOutline, SearchOutline, ShareOutline, LinkOutline, PersonOutline,
-  CalendarOutline, EyeOutline, DownloadOutline, CashOutline, DiamondOutline
+  CalendarOutline, EyeOutline, DownloadOutline, CashOutline, DiamondOutline,
+  ShieldCheckmarkOutline
 } from '@vicons/ionicons5'
 import dayjs from 'dayjs'
 
@@ -748,6 +755,10 @@ const viewNFTDetails = (nft) => {
 
 const goToMintPage = () => {
   router.push('/nft/mint')
+}
+
+const goToVerification = () => {
+  router.push('/verification')
 }
 
 const shareNFT = (nft) => {

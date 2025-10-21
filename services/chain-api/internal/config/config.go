@@ -37,7 +37,7 @@ func Load() *Config {
 		StartBlock:  getEnvUint64("START_BLOCK", 0),
 		PrivateKey:  getEnv("PRIVATE_KEY", ""),
 
-		DatabaseURL: getEnv("DATABASE_URL", "sqlite://desci.db"),
+		DatabaseURL: getEnv("DATABASE_URL", "sqlite://../../desci.db"),
 
 		DeSciRegistryAddress:    getEnv("DESCI_REGISTRY_ADDRESS", ""),
 		ResearchNFTAddress:      getEnv("RESEARCH_NFT_ADDRESS", ""),

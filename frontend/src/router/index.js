@@ -333,6 +333,18 @@ const routes = [
     ]
   },
   {
+    path: '/verification',
+    component: MainLayout,
+    children: [
+      {
+        path: '',
+        name: 'DataVerification',
+        component: () => import('../views/TestVerification.vue'),
+        meta: { title: 'Data Verification' }
+      }
+    ]
+  },
+  {
     path: '/nft',
     component: MainLayout,
     children: [

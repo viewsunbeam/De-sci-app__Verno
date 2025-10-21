@@ -38,7 +38,7 @@ func main() {
 	svc := service.NewService(repo)
 
 	// 初始化API处理器
-	handler := api.NewHandler(svc)
+	handler := api.NewHandler(svc, repo)
 
 	// 设置HTTP路由
 	router := handler.SetupRoutes()
@@ -100,13 +100,11 @@ func main() {
 					payload = map[string]interface{}{
 						"tokenId":      event.TokenID,
 						"authors": func() []string {
-							if len(event.Authors) > 0 { return event.Authors }
 							if event.Author != "" { return []string{event.Author} }
 							return []string{}
 						}(),
 						"title":        event.Title,
 						"contentHash":  event.DataHash,
-						"metadataHash": event.MetadataHash,
 					}
 				case "DatasetCreated":
 					payload = map[string]interface{}{
@@ -136,7 +134,7 @@ func main() {
 					LogIndex:     uint(event.LogIndex),
 					BlockNumber:  event.Block,
 					EventName:    normalized,
-					ContractAddr: event.Contract,
+					ContractAddr: "0x0000000000000000000000000000000000000000",
 					PayloadRaw:   string(b),
 					Processed:    false,
 					CreatedAt:    time.Now(),
