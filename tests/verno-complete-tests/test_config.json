@@ -16,21 +16,6 @@
         "/influence", "/verification"
       ]
     },
-    "backend": {
-      "name": "Node.js后端",
-      "url": "http://localhost:3000",
-      "timeout": 10,
-      "healthEndpoints": ["/health", "/api/health", "/"],
-      "apiEndpoints": [
-        "/api/users",
-        "/api/projects", 
-        "/api/datasets",
-        "/api/publications",
-        "/api/reviews",
-        "/api/nfts",
-        "/api/zkproofs"
-      ]
-    },
     "goService": {
       "name": "Go链下服务",
       "url": "http://localhost:8088",
@@ -58,9 +43,8 @@
     "criticalFiles": [
       "package.json",
       "frontend/package.json",
-      "backend/package.json", 
       "services/chain-api/go.mod",
-      "contracts/hardhat.config.js",
+      "hardhat.config.js",
       "docker-compose.yml",
       "README.md",
       ".gitignore"
@@ -74,7 +58,6 @@
     ],
     "dependencies": {
       "frontend": "frontend/node_modules",
-      "backend": "backend/node_modules",
       "goService": "services/chain-api/go.sum"
     }
   },
@@ -138,9 +121,8 @@
       "weight": 40,
       "tests": [
         "frontend_service",
-        "backend_service",
         "go_service",
-        "api_endpoints"
+        "go_api_endpoints"
       ]
     },
     "performance": {

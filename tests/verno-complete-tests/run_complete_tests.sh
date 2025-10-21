@@ -18,7 +18,6 @@ NC='\033[0m' # No Color
 # 配置
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 FRONTEND_URL="http://localhost:5173"
-BACKEND_URL="http://localhost:3000"
 GO_SERVICE_URL="http://localhost:8088"
 DATABASE_PATH="$PROJECT_ROOT/desci.db"
 
@@ -82,7 +81,7 @@ test_api_endpoint() {
     local endpoint=$1
     local expected_status=$2
     local test_name=$3
-    local base_url=${4:-$BACKEND_URL}
+    local base_url=$4
     
     ((TOTAL_TESTS++))
     log_info "测试 API: $endpoint"
@@ -143,23 +142,7 @@ test_frontend_pages() {
     done
 }
 
-test_backend_apis() {
-    local apis=(
-        "/api/users:200:用户管理API"
-        "/api/projects:200:项目管理API"
-        "/api/datasets:200:数据集管理API"
-        "/api/publications:200:论文管理API"
-        "/api/reviews:200:评议管理API"
-        "/api/nfts:200:NFT管理API"
-        "/api/zkproofs:200:零知识证明API"
-        "/health:404:健康检查API"
-    )
-    
-    for api_info in "${apis[@]}"; do
-        IFS=':' read -r endpoint expected_status name <<< "$api_info"
-        test_api_endpoint "$endpoint" "$expected_status" "$name"
-    done
-}
+# 后端(Node)不在当前仓库结构中，故不测试后端API
 
 test_go_service_apis() {
     if test_service "Go服务" "$GO_SERVICE_URL/health"; then
@@ -175,6 +158,24 @@ test_go_service_apis() {
             IFS=':' read -r endpoint expected_status name <<< "$api_info"
             test_api_endpoint "$endpoint" "$expected_status" "$name" "$GO_SERVICE_URL"
         done
+
+        # 校验统计JSON关键字段
+        ((TOTAL_TESTS++))
+        local has_keys=$(curl -s "$GO_SERVICE_URL/api/hybrid/stats" | jq -e '.nodejs_stats and .blockchain_stats' >/dev/null 2>&1; echo $?)
+        if [ "$has_keys" -eq 0 ]; then
+            log_success "混合统计JSON包含预期键"
+        else
+            log_error "混合统计JSON缺少预期键"
+        fi
+
+        # 校验验证API一致性布尔值存在
+        ((TOTAL_TESTS++))
+        local has_consistent=$(curl -s "$GO_SERVICE_URL/api/hybrid/verify/demo-token-123" | jq -e '.is_consistent' >/dev/null 2>&1; echo $?)
+        if [ "$has_consistent" -eq 0 ]; then
+            log_success "验证API包含 is_consistent 字段"
+        else
+            log_error "验证API缺少 is_consistent 字段"
+        fi
     fi
 }
 
@@ -184,9 +185,8 @@ test_file_structure() {
     local critical_files=(
         "package.json:项目配置文件"
         "frontend/package.json:前端配置文件"
-        "backend/package.json:后端配置文件"
         "services/chain-api/go.mod:Go服务配置"
-        "contracts/hardhat.config.js:区块链配置"
+        "hardhat.config.js:区块链配置"
         "docker-compose.yml:Docker配置"
         "README.md:项目文档"
     )
@@ -214,12 +214,7 @@ test_dependencies() {
         log_error "前端依赖未安装"
     fi
     
-    ((TOTAL_TESTS++))
-    if [ -d "$PROJECT_ROOT/backend/node_modules" ]; then
-        log_success "后端依赖已安装"
-    else
-        log_error "后端依赖未安装"
-    fi
+    # 当前仓库无独立后端(Node)目录，跳过后端依赖检查
     
     # 检查Go依赖
     ((TOTAL_TESTS++))
@@ -254,7 +249,7 @@ test_smart_contracts() {
     
     # 检查编译产物
     ((TOTAL_TESTS++))
-    if [ -d "$PROJECT_ROOT/contracts/artifacts" ]; then
+    if [ -d "$PROJECT_ROOT/contracts/artifacts" ] || [ -d "$PROJECT_ROOT/artifacts" ]; then
         log_success "智能合约编译产物存在"
     else
         log_warning "智能合约编译产物不存在，可能需要编译"
@@ -368,7 +363,7 @@ main() {
     # 5. 测试服务状态
     log_section "测试服务状态"
     test_service "前端服务" "$FRONTEND_URL"
-    test_service "后端服务" "$BACKEND_URL/health"
+    # 当前仓库无独立后端(Node)服务，跳过
     test_service "Go服务" "$GO_SERVICE_URL/health"
     
     # 6. 测试前端页面
@@ -378,12 +373,7 @@ main() {
         log_warning "前端服务未运行，跳过页面测试"
     fi
     
-    # 7. 测试后端API
-    if curl -s "$BACKEND_URL/health" > /dev/null 2>&1; then
-        test_backend_apis
-    else
-        log_warning "后端服务未运行，跳过API测试"
-    fi
+    # 7. 跳过后端API（无独立后端）
     
     # 8. 测试Go服务API
     test_go_service_apis
