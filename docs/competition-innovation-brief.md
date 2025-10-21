@@ -61,4 +61,4 @@
 
 ---
 
-> 更多技术细节请查阅 `docs/competition-design-report.md`、`docs/competition-test-report.md` 与代码注释。
+> 更多技术细节请查阅 `docs/verno-design-framework.md`、`docs/verno-testing-framework.md` 与代码注释。
