@@ -82,28 +82,61 @@
   3. 在 Dataset Detail 页面确认状态为 `processing → ready`。
   【这里我上传不了数据集】
 
-### 3.3 数据加密与权限控制【上传不了数据集这一步也做不了TT】
+### 3.3 数据加密与权限控制
 
 - **步骤**（参考 `frontend/src/views/datasets/DatasetEncrypt.vue`）：
+  
   1. 进入加密页面，选择算法、密钥策略。
+  
+     ![image-20251028212559074](../picture/加密1.png)
+  
   2. 触发加密并观察进度条。
-  3. 为某个钱包授予访问权限，验证数据库表 `dataset_permissions`。
-- **待补充**：
-  - 截图：`![Encrypt Flow 待补充](TODO)`
-  - 访问控制验证：  
-    - 正例（授权用户下载成功）：  
-    - 反例（未授权用户被拒绝）：
+  
+     ![image-20251028212942518](../picture/加密2.png)
+  
+  3. 为某个钱包授予访问权限。
+  
+     测试账户为`	0x90F79bf6EB2c4f870365E785982E1f101E93b906`
+  
+     ![image-20251028213925754](../picture/加密3.png)
+  
+     
+  
+     被授权账户下可以看到相关数据集：
+  
+     ![image-20251028221452544](../picture/加密3.png)
+  
+     
+  
+     非授权账户无信息：
+  
+     ![image-20251028221705019](../picture/加密4.png)
+  
+     
 
 ### 3.4 零知识证明与隐私查询
 
 - **步骤**：
-  1. `POST /api/datasets/:id/zk-proof`（通过前端按钮触发）。
-  2. 在 Proof 页面查看状态从 `pending`→`verified`。
-  3. 在 Private Query 页面执行一次差分隐私查询。
-- **待补充**：
-  - 截图：`![ZK Proof 待补充](TODO)`
-  - 链下日志片段：
-  - 改进建议：
+  
+  1. 上传需要生成证明的文件
+  
+     ![image-20251028222048517](../picture/ZKP1.png)
+  
+  2. 设置一些元数据
+  
+  3. 生成证明：
+  
+     ![image-20251028222248106](../picture/ZKP2.png)
+  
+     ![image-20251028222248106](../picture/ZKP3.png)
+  
+  4. 在 Private Query 页面执行一次差分隐私查询。
+  
+     ![image-20251028222248106](../picture/ZKP4.png)
+  
+     ![image-20251028222248106](../picture/ZKP5.png)
+  
+     
 
 ### 3.5 科研成果 NFT 铸造
 
@@ -128,8 +161,13 @@
 
 - **步骤**：
   1. 调用 `/api/chain/research/latest`、`/api/chain/dataset/:id` 验证链下记录。
+  
+     
+  
   2. 查看 `Log Dashboard`（管理员）了解审计日志。
+  
   3. 对照 Go 服务日志 (`services/chain-api`)。
+  
 - **待补充**：
   - 截图：`![Log Dashboard 待补充](TODO)`
   - 对应日志文件：
