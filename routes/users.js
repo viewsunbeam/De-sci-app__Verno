@@ -8,7 +8,7 @@ router.get('/wallet/:walletAddress', async (req, res) => {
   
   try {
     const user = await db.getAsync(
-      'SELECT * FROM users WHERE wallet_address = ?',
+      'SELECT * FROM users WHERE LOWER(wallet_address) = LOWER(?)',
       [walletAddress]
     );
 
@@ -201,7 +201,7 @@ router.get('/wallet/:walletAddress/dashboard-stats', async (req, res) => {
   
   try {
     // Get user by wallet address
-    const user = await db.getAsync('SELECT * FROM users WHERE wallet_address = ?', [walletAddress]);
+    const user = await db.getAsync('SELECT * FROM users WHERE LOWER(wallet_address) = LOWER(?)', [walletAddress]);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }

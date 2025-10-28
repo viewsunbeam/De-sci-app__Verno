@@ -277,13 +277,34 @@ const keySizeOptions = ref([
 // Form validation
 const configRules = {
   algorithm: [
-    { required: true, message: 'Please select an encryption algorithm', trigger: ['change', 'blur'] }
+    { 
+      required: true, 
+      message: 'Please select an encryption algorithm', 
+      trigger: 'change',
+      validator: (rule, value) => {
+        return value && value.length > 0
+      }
+    }
   ],
   key_size: [
-    { required: true, message: 'Please select a key size', trigger: ['change', 'blur'] }
+    { 
+      required: true, 
+      message: 'Please select a key size', 
+      trigger: 'change',
+      validator: (rule, value) => {
+        return value && (typeof value === 'number') && value > 0
+      }
+    }
   ],
   key_management: [
-    { required: true, message: 'Please select key management option', trigger: ['change', 'blur'] }
+    { 
+      required: true, 
+      message: 'Please select key management option', 
+      trigger: 'change',
+      validator: (rule, value) => {
+        return value && value.length > 0
+      }
+    }
   ]
 }
 
@@ -430,6 +451,13 @@ const fetchDataset = async () => {
 onMounted(async () => {
   await fetchCurrentUser()
   await fetchDataset()
+  
+  // Clear any initial validation errors after component is mounted
+  setTimeout(() => {
+    if (configFormRef.value) {
+      configFormRef.value.restoreValidation()
+    }
+  }, 100)
 })
 </script>
 

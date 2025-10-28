@@ -661,11 +661,7 @@ const fetchCurrentUser = async () => {
 
 const fetchDataset = async () => {
   try {
-    const params = currentUser.value?.wallet_address 
-      ? `?wallet_address=${currentUser.value.wallet_address}` 
-      : ''
-    
-    const response = await axios.get(`http://localhost:3000/api/datasets/${datasetId.value}${params}`)
+    const response = await axios.get(`http://localhost:3000/api/datasets/${datasetId.value}?wallet_address=${currentUser.value.wallet_address}`)
     dataset.value = response.data
   } catch (error) {
     console.error('Failed to fetch dataset:', error)
