@@ -54,7 +54,7 @@ import { useRouter } from 'vue-router';
 import { useWeb3 } from '../composables/useWeb3';
 
 const router = useRouter();
-const { connectWallet, disconnectWallet, account, isConnected } = useWeb3();
+const { connectWallet, disconnectWallet, account, isConnected, connectionError } = useWeb3();
 
 // --- User Role State ---
 const userRole = ref('研究员');
@@ -119,11 +119,17 @@ const handleConnect = async () => {
         console.log("Already connected.");
         return;
     }
+    
+    console.log("Connecting wallet...");
     const user = await connectWallet();
+    
     if (user) {
         localStorage.setItem('user', JSON.stringify(user));
         await fetchUserRole();
-        // No longer auto-redirecting. User can choose from dropdown.
+        console.log("Connection successful!");
+    } else if (connectionError.value) {
+        console.error("Connection failed:", connectionError.value);
+        alert(`连接失败: ${connectionError.value}`);
     }
 };
 
