@@ -163,9 +163,27 @@
             <n-grid :cols="2" :x-gap="24">
               <n-gi>
                 <n-form-item label="Keywords" path="keywords">
-                  <n-dynamic-tags v-model:value="paperForm.keywords" :max="10" />
+                  <div class="keywords-input-container">
+                    <n-input
+                      v-model:value="keywordInput"
+                      placeholder="Type keyword and press Enter"
+                      @keydown.enter.prevent="addKeyword"
+                      @blur="addKeyword"
+                    />
+                    <div class="keywords-display" v-if="paperForm.keywords.length > 0">
+                      <n-tag
+                        v-for="(keyword, index) in paperForm.keywords"
+                        :key="index"
+                        closable
+                        @close="removeKeyword(index)"
+                        style="margin: 4px 4px 0 0;"
+                      >
+                        {{ keyword }}
+                      </n-tag>
+                    </div>
+                  </div>
                   <template #feedback>
-                    Add relevant keywords to help others discover your research
+                    Add relevant keywords to help others discover your research (Current: {{ paperForm.keywords.length }})
                   </template>
                 </n-form-item>
               </n-gi>
@@ -399,11 +417,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, h, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   NCard, NButton, NSteps, NStep, NUpload, NUploadDragger, NIcon, NText, NP,
-  NForm, NFormItem, NInput, NSelect, NDynamicInput, NDynamicTags, NGrid, NGi,
+  NForm, NFormItem, NInput, NSelect, NDynamicInput, NGrid, NGi,
   NRadioGroup, NRadio, NTag, NProgress, useMessage
 } from 'naive-ui'
 import {
@@ -420,6 +438,7 @@ const uploadProgress = ref(0)
 const uploadStatus = ref('waiting') // waiting, uploading, completed, error
 const publicationType = ref('')
 const isSubmitting = ref(false)
+const keywordInput = ref('')
 
 // Form refs
 const paperFormRef = ref(null)
@@ -509,10 +528,11 @@ const paperRules = {
     { 
       required: true, 
       validator: (rule, value) => {
-        if (!value || value.length < 3) return new Error('At least 3 keywords are required')
+        console.log('Keywords validation:', value)
+        if (!value || value.length < 2) return new Error('At least 2 keywords are required')
         return true
       },
-      trigger: 'change'
+      trigger: ['change', 'blur']
     }
   ]
 }
@@ -589,10 +609,13 @@ const prevStep = () => {
 
 const validateAndNext = async () => {
   try {
+    console.log('Current form data:', paperForm.value)
     await paperFormRef.value?.validate()
+    console.log('Validation passed, moving to next step')
     nextStep()
   } catch (error) {
-    message.error('Please fill in all required fields correctly')
+    console.error('Validation error:', error)
+    message.error('Please fill in all required fields correctly: ' + (error.message || 'Unknown error'))
   }
 }
 
@@ -623,8 +646,29 @@ const submitPaper = async () => {
   }
 }
 
+// Keyword handling functions
+const addKeyword = () => {
+  const keyword = keywordInput.value.trim()
+  if (keyword && !paperForm.value.keywords.includes(keyword) && paperForm.value.keywords.length < 10) {
+    paperForm.value.keywords.push(keyword)
+    keywordInput.value = ''
+    console.log('Added keyword:', keyword, 'Total:', paperForm.value.keywords)
+  }
+}
+
+const removeKeyword = (index) => {
+  paperForm.value.keywords.splice(index, 1)
+  console.log('Removed keyword at index:', index, 'Remaining:', paperForm.value.keywords)
+}
+
 onMounted(() => {
   // Initialize form
+  console.log('Paper form initialized:', paperForm.value)
+  
+  // Watch keywords changes for debugging
+  watch(() => paperForm.value.keywords, (newKeywords) => {
+    console.log('Keywords changed:', newKeywords)
+  }, { deep: true })
 })
 </script>
 
@@ -658,6 +702,18 @@ onMounted(() => {
   color: #8b949e;
   margin: 0;
   line-height: 1.5;
+}
+
+.keywords-input-container {
+  width: 100%;
+}
+
+.keywords-display {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 }
 
 .step-indicator {

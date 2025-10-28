@@ -120,7 +120,19 @@
                   <div class="detail-grid">
                     <div class="detail-item">
                       <span class="detail-label">Token ID:</span>
-                      <span class="detail-value">{{ formatTokenId(nft.tokenId) }}</span>
+                      <div class="detail-value-with-copy">
+                        <span class="detail-value">{{ formatTokenId(nft.tokenId) }}</span>
+                        <n-button 
+                          size="tiny" 
+                          @click="copyTokenId" 
+                          :loading="copying"
+                          class="copy-btn"
+                        >
+                          <template #icon>
+                            <n-icon :component="CopyOutline" />
+                          </template>
+                        </n-button>
+                      </div>
                     </div>
                     <div class="detail-item">
                       <span class="detail-label">Contract:</span>
@@ -313,7 +325,7 @@ import {
 } from 'naive-ui'
 import {
   ArrowBackOutline, CashOutline, CardOutline, ShareOutline, LinkOutline,
-  DownloadOutline
+  DownloadOutline, CopyOutline
 } from '@vicons/ionicons5'
 import dayjs from 'dayjs'
 
@@ -327,6 +339,7 @@ const isListing = ref(false)
 const nft = ref(null)
 const showListDialog = ref(false)
 const listFormRef = ref(null)
+const copying = ref(false)
 
 // Current user info
 const currentUser = ref(null)
@@ -477,6 +490,21 @@ const openListDialog = () => {
     description: `${nft.value.assetType}: ${nft.value.title}`
   }
   showListDialog.value = true
+}
+
+const copyTokenId = async () => {
+  if (!nft.value?.tokenId) return
+  
+  copying.value = true
+  try {
+    await navigator.clipboard.writeText(nft.value.tokenId)
+    message.success('Token ID copied to clipboard!')
+  } catch (error) {
+    console.error('Failed to copy token ID:', error)
+    message.error('Failed to copy token ID')
+  } finally {
+    copying.value = false
+  }
 }
 
 const confirmListing = async () => {
@@ -785,6 +813,21 @@ onMounted(() => {
   font-size: 0.9rem;
   color: #c9d1d9;
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.detail-value-with-copy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copy-btn {
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.copy-btn:hover {
+  opacity: 1;
 }
 
 .authors-list {

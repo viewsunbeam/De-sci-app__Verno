@@ -169,11 +169,39 @@
                 View Dataset
               </n-button>
 
+              <!-- Test Verification Section -->
+              <n-card title="Test Verification" class="test-verification-card" style="margin-bottom: 16px;">
+                <div class="test-inputs">
+                  <n-form-item label="Custom Public Inputs (JSON Array)">
+                    <n-input
+                      v-model:value="customPublicInputs"
+                      type="textarea"
+                      placeholder='["input1", "input2", "input3"] or ["wrong", "invalid", "fail"] for failure test'
+                      :rows="3"
+                    />
+                  </n-form-item>
+                  <n-space>
+                    <n-button @click="verifyWithCustomInputs" type="warning" size="medium" :loading="isVerifying">
+                      <template #icon>
+                        <n-icon :component="WarningOutline" />
+                      </template>
+                      Test with Custom Inputs
+                    </n-button>
+                    <n-button @click="verifyWithFailureInputs" type="error" size="medium" :loading="isVerifying">
+                      <template #icon>
+                        <n-icon :component="CloseCircleOutline" />
+                      </template>
+                      Test Failure Case
+                    </n-button>
+                  </n-space>
+                </div>
+              </n-card>
+
               <n-button @click="verifyProof" type="primary" size="large" :loading="isVerifying">
                 <template #icon>
                   <n-icon :component="CheckmarkCircleOutline" />
                 </template>
-                Verify ZK Proof
+                Verify ZK Proof (Normal)
               </n-button>
 
               <n-button @click="regenerateProof" secondary size="large">
@@ -194,11 +222,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { 
-  NButton, NIcon, NCard, NSpin, NSkeleton, NTag, useMessage
+  NButton, NIcon, NCard, NSpin, NSkeleton, NTag, NInput, NFormItem, NSpace, useMessage
 } from 'naive-ui'
 import {
   ArrowBackOutline, DocumentOutline, ShieldCheckmarkOutline, CheckmarkCircleOutline,
-  TimeOutline, AlertCircleOutline, CopyOutline, SearchOutline, DownloadOutline, RefreshOutline
+  TimeOutline, AlertCircleOutline, CopyOutline, SearchOutline, DownloadOutline, RefreshOutline,
+  WarningOutline, CloseCircleOutline
 } from '@vicons/ionicons5'
 import axios from 'axios'
 import { useWeb3 } from '../composables/useWeb3.js'
@@ -213,6 +242,7 @@ const proofInfo = ref({})
 const isLoading = ref(true)
 const currentUser = ref(null)
 const isVerifying = ref(false)
+const customPublicInputs = ref('')
 
 // Computed properties
 const datasetId = computed(() => route.params.dataset_id)

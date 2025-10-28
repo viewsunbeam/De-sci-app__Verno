@@ -1,0 +1,79 @@
+{
+  "dataset_info": {
+    "title": "Academic Research Performance Dataset",
+    "description": "A comprehensive dataset containing information about academic researchers, their publications, and research metrics",
+    "version": "1.0",
+    "created_date": "2024-10-28",
+    "license": "CC BY 4.0",
+    "keywords": ["research", "academia", "publications", "h-index", "citations"]
+  },
+  "methodology": {
+    "data_collection": "Survey and public academic databases",
+    "sample_size": 20,
+    "collection_period": "2024-01-01 to 2024-10-28",
+    "quality_control": "Manual verification and cross-referencing"
+  },
+  "fields": {
+    "id": {
+      "type": "integer",
+      "description": "Unique identifier for each researcher"
+    },
+    "name": {
+      "type": "string",
+      "description": "Full name of the researcher"
+    },
+    "age": {
+      "type": "integer",
+      "description": "Age of the researcher in years"
+    },
+    "city": {
+      "type": "string",
+      "description": "Primary research institution location"
+    },
+    "research_field": {
+      "type": "string",
+      "description": "Primary area of research specialization"
+    },
+    "publication_count": {
+      "type": "integer",
+      "description": "Total number of peer-reviewed publications"
+    },
+    "h_index": {
+      "type": "integer",
+      "description": "H-index metric for research impact"
+    }
+  },
+  "statistics": {
+    "total_researchers": 20,
+    "avg_age": 38.5,
+    "avg_publications": 42.1,
+    "avg_h_index": 13.7,
+    "research_fields": [
+      "Machine Learning",
+      "Blockchain", 
+      "Bioinformatics",
+      "Quantum Computing",
+      "Data Science",
+      "Cryptography",
+      "AI Ethics",
+      "Computer Vision",
+      "Natural Language Processing",
+      "Distributed Systems",
+      "Cybersecurity",
+      "Robotics",
+      "Deep Learning",
+      "Software Engineering",
+      "Human-Computer Interaction",
+      "Database Systems",
+      "Information Retrieval",
+      "Computer Graphics",
+      "Network Security",
+      "Parallel Computing"
+    ]
+  },
+  "usage_notes": {
+    "privacy": "All data is anonymized and aggregated",
+    "limitations": "Small sample size, limited to computer science fields",
+    "recommended_use": "Educational and research purposes only"
+  }
+}

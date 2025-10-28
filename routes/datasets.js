@@ -8,9 +8,15 @@ const crypto = require('crypto');
 
 // --- Multer Configuration for Dataset Files ---
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: async function (req, file, cb) {
     const uploadPath = path.join(__dirname, '..', 'uploads', 'datasets');
-    cb(null, uploadPath);
+    try {
+      await fs.mkdir(uploadPath, { recursive: true });
+      cb(null, uploadPath);
+    } catch (error) {
+      console.error('Failed to create upload directory:', error);
+      cb(error);
+    }
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -37,7 +43,7 @@ const upload = multer({
 
 // Helper function to get user by wallet address
 const getUserByWallet = async (walletAddress) => {
-  return await db.getAsync('SELECT * FROM users WHERE wallet_address = ?', [walletAddress]);
+  return await db.getAsync('SELECT * FROM users WHERE LOWER(wallet_address) = LOWER(?)', [walletAddress]);
 };
 
 // Helper function to log dataset usage
@@ -67,21 +73,31 @@ router.get('/', async (req, res) => {
     }
 
     let sql = `
-      SELECT 
+      SELECT DISTINCT
         d.*,
         u.username as owner_username,
         p.name as project_name,
         CASE 
           WHEN d.zk_proof_id IS NOT NULL THEN 'zk_proof_protected'
           ELSE d.privacy_level
-        END as effective_privacy_level
+        END as effective_privacy_level,
+        CASE 
+          WHEN d.owner_id = ? THEN 'owner'
+          WHEN dp.permission_type IS NOT NULL THEN dp.permission_type
+          ELSE NULL
+        END as access_type
       FROM datasets d
       LEFT JOIN users u ON d.owner_id = u.id
       LEFT JOIN projects p ON d.project_id = p.id
-      WHERE d.owner_id = ?
+      LEFT JOIN dataset_permissions dp ON (
+        d.id = dp.dataset_id 
+        AND (dp.user_id = ? OR dp.wallet_address = ?)
+        AND (dp.expires_at IS NULL OR dp.expires_at > datetime('now'))
+      )
+      WHERE (d.owner_id = ? OR dp.id IS NOT NULL)
     `;
     
-    const params = [user.id];
+    const params = [user.id, user.id, user.wallet_address, user.id];
     
     if (project_id) {
       sql += ' AND d.project_id = ?';
@@ -112,7 +128,8 @@ router.get('/', async (req, res) => {
         name: dataset.name,
         privacy_level: dataset.privacy_level,
         has_zk_proof: !!dataset.zk_proof_id,
-        effective_privacy_level: dataset.effective_privacy_level
+        effective_privacy_level: dataset.effective_privacy_level,
+        access_type: dataset.access_type
       });
     });
     
@@ -409,6 +426,10 @@ router.get('/:id', async (req, res) => {
 // Upload new dataset
 router.post('/upload', upload.array('datasets', 10), async (req, res) => { // Support up to 10 files
   try {
+    console.log('📤 [BACKEND] Dataset upload request received');
+    console.log('📋 [BACKEND] Request body:', req.body);
+    console.log('📁 [BACKEND] Files:', req.files ? req.files.length : 0);
+    
     const {
       name,
       description,
@@ -480,11 +501,6 @@ router.post('/upload', upload.array('datasets', 10), async (req, res) => { // Su
       file.size > largest.size ? file : largest
     );
 
-    // Regular upload with files
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: 'No files uploaded' });
-    }
-
     // Create dataset record
     const result = await db.runAsync(`
       INSERT INTO datasets (
@@ -552,8 +568,12 @@ router.post('/upload', upload.array('datasets', 10), async (req, res) => { // Su
       totalSize
     });
   } catch (error) {
-    console.error('Failed to upload dataset:', error);
-    res.status(500).json({ error: 'Failed to upload dataset' });
+    console.error('❌ [BACKEND] Failed to upload dataset:', error);
+    console.error('❌ [BACKEND] Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Failed to upload dataset',
+      details: error.message 
+    });
   }
 });
 
@@ -982,7 +1002,30 @@ router.post('/zk-proof/:proofId/verify', async (req, res) => {
     }
 
     // Mock verification (in real implementation, this would verify the actual proof)
-    const isValid = Math.random() > 0.1; // 90% success rate for demo
+    let isValid;
+    
+    // Check for intentionally invalid inputs to simulate failure
+    if (public_inputs && Array.isArray(public_inputs)) {
+      const hasInvalidInputs = public_inputs.some(input => 
+        typeof input === 'string' && (
+          input.includes('wrong') || 
+          input.includes('invalid') || 
+          input.includes('fail') ||
+          input.length < 10 // Too short to be valid
+        )
+      );
+      
+      if (hasInvalidInputs) {
+        isValid = false;
+        console.log('🚫 [ZKP] Verification failed due to invalid inputs:', public_inputs);
+      } else {
+        isValid = Math.random() > 0.2; // 80% success rate for valid inputs
+        console.log('✅ [ZKP] Verification result:', isValid ? 'PASSED' : 'FAILED');
+      }
+    } else {
+      isValid = Math.random() > 0.3; // 70% success rate for missing inputs
+      console.log('⚠️ [ZKP] Verification with missing inputs:', isValid ? 'PASSED' : 'FAILED');
+    }
 
     if (isValid) {
       await db.runAsync(

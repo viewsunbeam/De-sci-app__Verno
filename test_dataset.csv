@@ -1,0 +1,21 @@
+id,name,age,city,research_field,publication_count,h_index
+1,Dr. Alice Johnson,35,Boston,Machine Learning,45,12
+2,Prof. Bob Chen,42,San Francisco,Blockchain,38,15
+3,Dr. Carol Smith,29,New York,Bioinformatics,23,8
+4,Prof. David Wilson,51,Seattle,Quantum Computing,67,22
+5,Dr. Emma Brown,33,Austin,Data Science,31,10
+6,Prof. Frank Lee,46,Chicago,Cryptography,52,18
+7,Dr. Grace Wang,28,Los Angeles,AI Ethics,19,6
+8,Prof. Henry Davis,39,Denver,Computer Vision,41,14
+9,Dr. Ivy Martinez,31,Miami,Natural Language Processing,27,9
+10,Prof. Jack Thompson,44,Portland,Distributed Systems,49,16
+11,Dr. Kate Anderson,37,Phoenix,Cybersecurity,35,11
+12,Prof. Leo Garcia,48,Houston,Robotics,58,20
+13,Dr. Mia Rodriguez,26,Philadelphia,Deep Learning,15,5
+14,Prof. Noah Kim,53,San Diego,Software Engineering,71,25
+15,Dr. Olivia Taylor,32,Nashville,Human-Computer Interaction,29,7
+16,Prof. Paul White,41,Atlanta,Database Systems,43,13
+17,Dr. Quinn Miller,30,Las Vegas,Information Retrieval,25,8
+18,Prof. Rachel Green,45,Minneapolis,Computer Graphics,55,19
+19,Dr. Sam Jackson,34,Detroit,Network Security,33,10
+20,Prof. Tina Liu,47,Salt Lake City,Parallel Computing,61,21

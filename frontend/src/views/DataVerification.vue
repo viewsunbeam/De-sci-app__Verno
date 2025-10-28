@@ -1,6 +1,14 @@
 <template>
   <div class="data-verification">
     <div class="page-header">
+      <div class="header-navigation">
+        <n-button text @click="goToNFTs" class="back-btn">
+          <template #icon>
+            <n-icon :component="ArrowBackOutline" />
+          </template>
+          Back to NFTs
+        </n-button>
+      </div>
       <h1>🔍 数据验证中心</h1>
       <p>验证平台数据的区块链一致性和完整性</p>
     </div>
@@ -138,11 +146,13 @@
 
 <script setup>
 import { ref, onMounted, h } from 'vue'
+import { useRouter } from 'vue-router'
 import { 
   NCard, NGrid, NGridItem, NStatistic, NDataTable, NButton, 
   NIcon, NSpace, NTag, NModal, NDescriptions, NDescriptionsItem,
   NUl, NLi, NTabs, NTabPane
 } from 'naive-ui'
+import { ArrowBackOutline } from '@vicons/ionicons5'
 import { useHybridData } from '@/composables/useHybridData'
 
 const {
@@ -155,6 +165,7 @@ const {
   checkGoServiceHealth
 } = useHybridData()
 
+const router = useRouter()
 const goServiceHealthy = ref(false)
 const stats = ref(null)
 const hybridNFTs = ref([])
@@ -232,6 +243,11 @@ const showNFTVerification = async (tokenId) => {
   }
 }
 
+// 导航到NFTs页面
+const goToNFTs = () => {
+  router.push('/nfts')
+}
+
 // 刷新所有数据
 const refreshData = async () => {
   await Promise.all([
@@ -287,6 +303,19 @@ onMounted(async () => {
 
 .page-header {
   margin-bottom: 24px;
+}
+
+.header-navigation {
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  color: #666;
+  transition: color 0.2s;
+}
+
+.back-btn:hover {
+  color: #18a058;
 }
 
 .page-header h1 {
