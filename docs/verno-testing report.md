@@ -62,8 +62,8 @@
    ![Dashboard1](..\picture\身份初始化1.png)
   2. 补充个人档案（邮箱、研究兴趣）。
    ![Dashboard2](..\picture\身份初始化2.png)
-    ![Dashboard3](..\picture\身份初始化3.png)
-    ![Dashboard4](..\picture\身份初始化4.png)
+      ![Dashboard3](..\picture\身份初始化3.png)
+      ![Dashboard4](..\picture\身份初始化4.png)
   3. 完成 ORCID / 学术邮箱验证流程。
      ![Dashboard5](..\picture\身份初始化5.png) 
   
@@ -74,13 +74,13 @@
 - **步骤**：
   1. 创建新项目，添加协作者。
    ![项目协作](..\picture\项目2.png)
-   ![项目协作](..\picture\项目3.png)
+    ![项目协作](..\picture\项目3.png)
   2. 上传数据集（含多文件），设置隐私等级为 `encrypted`。
    ![项目协作](..\picture\数据集1.png)
-   ![项目协作](..\picture\数据集2.png)
-   ![项目协作](..\picture\数据集3.png)
+    ![项目协作](..\picture\数据集2.png)
+    ![项目协作](..\picture\数据集3.png)
   3. 在 Dataset Detail 页面确认状态为 `processing → ready`。
-【这里我上传不了数据集】
+  【这里我上传不了数据集】
 
 ### 3.3 数据加密与权限控制【上传不了数据集这一步也做不了TT】
 
@@ -110,15 +110,15 @@
 - **步骤**：
   1. 在 Publications/NFT 页面提交成果信息。
    ![提交成果](..\picture\上传成果1.png)
-   ![提交成果](..\picture\上传成果2.png)
-   ![提交成果](..\picture\上传成果3.png)
-   ![提交成果](..\picture\上传成果4.png)
-   ![提交成果](..\picture\上传成果5.png)
-   ![提交成果](..\picture\上传成果6.png)
+    ![提交成果](..\picture\上传成果2.png)
+    ![提交成果](..\picture\上传成果3.png)
+    ![提交成果](..\picture\上传成果4.png)
+    ![提交成果](..\picture\上传成果5.png)
+    ![提交成果](..\picture\上传成果6.png)
   2. 铸造 NFT 并记录交易哈希。
    ![铸造NFT](..\picture\NFT.png)
   3. 在 Marketplace 查看上架信息。
-   
+  
 - **待补充**：
   - 截图：`![NFT Mint 待补充](TODO)`
   - 交易哈希：
