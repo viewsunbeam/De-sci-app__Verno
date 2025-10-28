@@ -47,6 +47,18 @@ const routes = [
     ]
   },
   {
+    path: '/wallet-test',
+    component: MainLayout,
+    children: [
+      {
+        path: '',
+        name: 'WalletTest',
+        component: () => import('../views/WalletTest.vue'),
+        meta: { title: 'Wallet Connection Test' }
+      }
+    ]
+  },
+  {
     path: '/explore',
     component: MainLayout,
     children: [
