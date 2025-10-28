@@ -41,7 +41,24 @@ class ContractService {
       }
 
       try {
-        this.contracts[name] = new Contract(cfg.address, cfg.abi, this.provider);
+        let abi = cfg.abi;
+        
+        // 如果ABI是文件路径字符串，则加载实际的ABI
+        if (typeof abi === 'string' && abi.includes('artifacts/')) {
+          const fs = require('fs');
+          const path = require('path');
+          const artifactPath = path.resolve(abi);
+          
+          if (fs.existsSync(artifactPath)) {
+            const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+            abi = artifact.abi;
+          } else {
+            console.warn(`⚠️  合约 ${name} ABI文件不存在: ${artifactPath}`);
+            return;
+          }
+        }
+        
+        this.contracts[name] = new Contract(cfg.address, abi, this.provider);
       } catch (error) {
         console.warn(`⚠️  合约 ${name} 初始化失败: ${error.message}`);
       }
