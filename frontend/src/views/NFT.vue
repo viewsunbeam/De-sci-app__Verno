@@ -216,85 +216,14 @@
     <div v-if="filteredNFTs.length === 0" class="empty-state">
       <n-empty description="No NFTs found" size="large">
         <template #extra>
-          <n-button type="primary" @click="showMintDialog = true">
+          <n-button type="primary" @click="goToMintPage">
             Mint Your First NFT
           </n-button>
         </template>
       </n-empty>
     </div>
 
-    <!-- Mint Dialog -->
-    <n-modal v-model:show="showMintDialog" preset="dialog" title="Mint New NFT">
-      <template #header>
-        <div class="dialog-header">
-          <n-icon :component="DiamondOutline" class="dialog-icon" />
-          <span>Mint Research Paper as NFT</span>
-        </div>
-      </template>
-      <div class="mint-form">
-        <n-form :model="mintForm" ref="mintFormRef" :rules="mintRules">
-          <n-form-item label="Paper Title" path="title">
-            <n-input v-model:value="mintForm.title" placeholder="Enter paper title" />
-          </n-form-item>
-          <n-form-item label="Authors" path="authors">
-            <n-input v-model:value="mintForm.authors" placeholder="Enter authors (comma separated)" />
-          </n-form-item>
-          <n-form-item label="Category" path="category">
-            <n-select v-model:value="mintForm.category" :options="categoryOptions" placeholder="Select category" />
-          </n-form-item>
-          
-          <n-form-item label="Access Type" path="accessType">
-            <n-radio-group v-model:value="mintForm.accessType">
-              <n-radio value="open">Open Access (Free)</n-radio>
-              <n-radio value="restricted">Restricted Access</n-radio>
-            </n-radio-group>
-          </n-form-item>
-          
-          <!-- Revenue sharing for restricted access -->
-          <div v-if="mintForm.accessType === 'restricted'" class="revenue-sharing-section">
-            <n-form-item label="Revenue Sharing" path="authorShares">
-              <div class="author-shares">
-                <div v-for="(author, index) in parsedAuthors" :key="index" class="author-share-item">
-                  <span class="author-name">{{ author.trim() }}</span>
-                  <n-input-number 
-                    v-model:value="mintForm.authorShares[index]" 
-                    :min="0" 
-                    :max="100" 
-                    :step="1"
-                    suffix="%"
-                    :placeholder="`${Math.floor(100 / parsedAuthors.length)}`"
-                  />
-                </div>
-              </div>
-              <template #feedback>
-                <span class="share-feedback">
-                  Total: {{ totalShares }}% (must equal 100%)
-                </span>
-              </template>
-            </n-form-item>
-          </div>
-          
-          <n-form-item label="Paper File" path="file">
-            <n-upload
-              :file-list="mintForm.fileList"
-              :max="1"
-              accept=".pdf"
-              @change="handleFileChange"
-            >
-              <n-button>Upload PDF</n-button>
-            </n-upload>
-          </n-form-item>
-        </n-form>
-      </div>
-      <template #action>
-        <n-space>
-          <n-button @click="showMintDialog = false">Cancel</n-button>
-          <n-button type="primary" @click="mintNFT" :loading="isMinting">
-            Mint NFT
-          </n-button>
-        </n-space>
-      </template>
-    </n-modal>
+    <!-- Note: Mint dialog removed - all minting now uses /nft/mint route -->
 
     <!-- List for Sale Dialog -->
     <n-modal v-model:show="showListDialog" preset="dialog" title="List NFT for Sale">
@@ -422,6 +351,7 @@ import {
   ShieldCheckmarkOutline
 } from '@vicons/ionicons5'
 import dayjs from 'dayjs'
+import { getImageUrl as getIPFSImageUrl } from '../utils/ipfs.js'
 
 const message = useMessage()
 const route = useRoute()
@@ -434,9 +364,7 @@ const selectedStatus = ref(null)
 const sortBy = ref('newest')
 const currentPage = ref(1)
 const pageSize = ref(8)
-const showMintDialog = ref(false)
-const isMinting = ref(false)
-const currentPaperData = ref(null)
+// Note: Mint dialog variables removed - all minting now uses /nft/mint route
 
 // List for Sale dialog data
 const showListDialog = ref(false)
@@ -771,21 +699,7 @@ const viewOnBlockchain = (nft) => {
   // TODO: Open blockchain explorer
 }
 
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return null;
-
-  // If it's already a full URL (IPFS or HTTP), return as is
-  if (imagePath.startsWith('http') || imagePath.startsWith('ipfs://') || imagePath.startsWith('data:')) {
-    return imagePath;
-  }
-
-  // If it's a local upload path, prepend the backend server URL
-  if (imagePath.startsWith('/uploads/')) {
-    return `http://localhost:3000${imagePath}`;
-  }
-
-  return imagePath;
-}
+const getImageUrl = getIPFSImageUrl
 
 const getDefaultImage = (title) => {
   // Create a beautiful SVG placeholder with gradient and design elements
@@ -963,140 +877,14 @@ const confirmListing = async () => {
   }
 }
 
-const mintNFT = async () => {
-  try {
-    await mintFormRef.value?.validate()
-    isMinting.value = true
-    
-    // Get current user's wallet address
-    const userData = localStorage.getItem('user')
-    if (!userData) {
-      message.error('Please log in to mint NFTs')
-      return
-    }
-    
-    const user = JSON.parse(userData)
-    const walletAddress = user.wallet_address
-    
-    if (!walletAddress) {
-      message.error('Wallet address not found')
-      return
-    }
-    
-    // Prepare author data with revenue shares
-    const authorsData = parsedAuthors.value.map((authorName, index) => ({
-      address: index === 0 ? walletAddress : `0x${Math.random().toString(16).substr(2, 40)}`, // First author gets user's address
-      name: authorName.trim(),
-      share: mintForm.value.accessType === 'restricted' ? mintForm.value.authorShares[index] : 0
-    }))
-    
-    // Prepare mint data
-    const mintData = {
-      assetType: 'Custom',
-      selectedAsset: 0, // Custom asset
-      title: mintForm.value.title,
-      category: mintForm.value.category,
-      keywords: JSON.stringify(['Research', 'NFT', 'Blockchain']),
-      description: `Research NFT for: ${mintForm.value.title}`,
-      authors: JSON.stringify(authorsData),
-      contentCID: `QmCustom${Date.now()}${Math.random().toString(36).substr(2, 8)}`,
-      openAccess: mintForm.value.accessType === 'open',
-      accessPrice: 0, // Price will be set later when listing for sale
-      isLimitedEdition: false,
-      editionSize: 0,
-      coverImageCID: `QmImage${Date.now()}${Math.random().toString(36).substr(2, 8)}`
-    }
-    
-    // Call backend API to mint NFT
-    const response = await fetch('http://localhost:3000/api/nfts/mint', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(mintData)
-    })
-    
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Failed to mint NFT')
-    }
-    
-    const result = await response.json()
-    
-    showMintDialog.value = false
-    message.success('NFT minted successfully!')
-    
-    // Reset form
-    mintForm.value = {
-      title: '',
-      authors: '',
-      category: null,
-      accessType: 'open',
-      authorShares: [],
-      fileList: []
-    }
-    
-    // Reload NFTs to show the new one
-    await loadNFTs()
-    
-  } catch (error) {
-    console.error('Mint error:', error)
-    message.error(error.message || 'Failed to mint NFT')
-  } finally {
-    isMinting.value = false
-  }
-}
+// Note: mintNFT function removed - all minting now uses /nft/mint route
 
 onMounted(() => {
   // Load NFTs from backend
   loadNFTs()
   
-  // Check if we should open mint dialog and pre-fill with paper data
-  if (route.query.mint === 'true') {
-    showMintDialog.value = true
-    
-    // 检查是否有论文数据
-    if (route.query.paper_data) {
-      try {
-        // 解码论文数据
-        const paperData = JSON.parse(atob(route.query.paper_data))
-        
-        // 存储论文数据用于预览
-        currentPaperData.value = paperData
-        
-        // 预填充表单
-        mintForm.value = {
-          title: paperData.title,
-          authors: paperData.authors,
-          category: paperData.category,
-          accessType: 'restricted', // 默认为限制访问，用户可以修改
-          authorShares: [], // 将在authors改变时自动初始化
-          fileList: []
-        }
-        
-        // 显示论文信息
-        message.success(`已加载论文信息: ${paperData.title}`)
-        console.log('Loaded paper data:', paperData)
-        
-      } catch (error) {
-        console.error('Failed to parse paper data:', error)
-        message.error('无法解析论文数据，请重试')
-      }
-    } else if (route.query.paper_id) {
-      // 兼容旧的 paper_id 参数
-      const paperId = route.query.paper_id
-      mintForm.value = {
-        title: `Research Paper #${paperId}`,
-        authors: 'Dr. Jane Smith, Dr. John Doe',
-        category: 'Research',
-        accessType: 'restricted',
-        authorShares: [], // 将在authors改变时自动初始化
-        fileList: []
-      }
-      
-      message.info('Pre-filled with paper data. Please review and adjust as needed.')
-    }
-  }
+  // Note: Legacy mint dialog functionality has been moved to /nft/mint route
+  // All NFT minting now uses the unified ProjectNFT.vue page
 })
 </script>
 

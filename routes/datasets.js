@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const crypto = require('crypto');
+const ActivityLogger = require('../utils/logger');
 
 // --- Multer Configuration for Dataset Files ---
 const storage = multer.diskStorage({
@@ -551,6 +552,15 @@ router.post('/upload', upload.array('datasets', 10), async (req, res) => { // Su
       ]);
     }
 
+    // Log the dataset upload activity
+    await ActivityLogger.logDatasetUploaded(
+      user.id,
+      user.username,
+      datasetId,
+      name,
+      req
+    );
+
     // Simulate processing delay and then mark as ready
     setTimeout(async () => {
       try {
@@ -688,11 +698,28 @@ router.delete('/:id', async (req, res) => {
       }
     }
 
-    // Delete dataset and related records
-    await db.runAsync('DELETE FROM dataset_usage WHERE dataset_id = ?', [id]);
-    await db.runAsync('DELETE FROM dataset_permissions WHERE dataset_id = ?', [id]);
-    await db.runAsync('DELETE FROM zk_proofs WHERE dataset_id = ?', [id]);
-    await db.runAsync('DELETE FROM datasets WHERE id = ?', [id]);
+    // Use a transaction to avoid FK violations and ensure atomic deletion
+    await db.runAsync('BEGIN');
+    try {
+      // 1) Break FK from datasets.zk_proof_id -> zk_proofs.id
+      await db.runAsync('UPDATE datasets SET zk_proof_id = NULL WHERE id = ?', [id]);
+
+      // 2) Delete dependent rows first
+      await db.runAsync('DELETE FROM dataset_usage WHERE dataset_id = ?', [id]);
+      await db.runAsync('DELETE FROM dataset_permissions WHERE dataset_id = ?', [id]);
+      // dataset_files has ON DELETE CASCADE, but some old DBs may lack it; add a safe guard
+      await db.runAsync('DELETE FROM dataset_files WHERE dataset_id = ?', [id]);
+      await db.runAsync('DELETE FROM zk_proofs WHERE dataset_id = ?', [id]);
+
+      // 3) Delete the dataset itself
+      await db.runAsync('DELETE FROM datasets WHERE id = ?', [id]);
+
+      await db.runAsync('COMMIT');
+    } catch (txErr) {
+      await db.runAsync('ROLLBACK');
+      console.error('Failed to delete dataset in transaction:', txErr);
+      return res.status(500).json({ error: 'Failed to delete dataset' });
+    }
 
     res.json({ message: 'Dataset deleted successfully' });
   } catch (error) {
@@ -778,6 +805,19 @@ router.post('/:id/permissions', async (req, res) => {
       expires_at
     ]);
 
+    // 记录权限授予日志
+    await ActivityLogger.logDatasetPermissionGranted(
+      user.id,
+      user.username,
+      target_wallet_address,
+      targetUser ? targetUser.username : null,
+      id,
+      dataset.name,
+      permission_type,
+      expires_at,
+      req
+    );
+
     res.json({
       id: result.lastID,
       message: 'Permission granted successfully'
@@ -805,7 +845,31 @@ router.delete('/:id/permissions/:permissionId', async (req, res) => {
       return res.status(404).json({ error: 'Dataset not found or access denied' });
     }
 
+    // 获取要撤销的权限信息（用于日志记录）
+    const permission = await db.getAsync(`
+      SELECT dp.*, u.username 
+      FROM dataset_permissions dp 
+      LEFT JOIN users u ON dp.user_id = u.id 
+      WHERE dp.id = ? AND dp.dataset_id = ?
+    `, [permissionId, id]);
+
+    if (!permission) {
+      return res.status(404).json({ error: 'Permission not found' });
+    }
+
     await db.runAsync('DELETE FROM dataset_permissions WHERE id = ? AND dataset_id = ?', [permissionId, id]);
+
+    // 记录权限撤销日志
+    await ActivityLogger.logDatasetPermissionRevoked(
+      user.id,
+      user.username,
+      permission.wallet_address,
+      permission.username,
+      id,
+      dataset.name,
+      permission.permission_type,
+      req
+    );
 
     res.json({ message: 'Permission revoked successfully' });
   } catch (error) {

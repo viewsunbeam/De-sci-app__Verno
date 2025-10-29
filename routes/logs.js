@@ -100,7 +100,8 @@ router.get('/', async (req, res) => {
     const formattedLogs = logs.map(log => ({
       ...log,
       metadata: log.metadata ? JSON.parse(log.metadata) : null,
-      timestamp: new Date(log.timestamp).toISOString()
+      // 数据库存储的是UTC时间，需要正确解析
+      timestamp: new Date(log.timestamp + 'Z').toISOString()
     }));
 
     res.json({
@@ -231,7 +232,8 @@ router.get('/critical', async (req, res) => {
 
     const formattedLogs = criticalLogs.map(log => ({
       ...log,
-      timestamp: new Date(log.timestamp).toISOString()
+      // 数据库存储的是UTC时间，需要正确解析
+      timestamp: new Date(log.timestamp + 'Z').toISOString()
     }));
 
     res.json(formattedLogs);

@@ -424,15 +424,37 @@ const getLabelType = (label) => {
 }
 
 const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffInHours = Math.floor((now - date) / (1000 * 60 * 60))
+  if (!dateString) return 'Invalid Date'
   
-  if (diffInHours < 24) {
-    return `${diffInHours} hours ago`
-  } else {
-    const diffInDays = Math.floor(diffInHours / 24)
-    return `${diffInDays} days ago`
+  try {
+    let date
+    // 如果时间戳已经包含时区信息，直接解析
+    if (dateString.includes('T') || dateString.includes('Z') || dateString.includes('+')) {
+      date = new Date(dateString)
+    } else {
+      // 否则，假设是UTC时间，添加Z后缀
+      date = new Date(dateString + 'Z')
+    }
+    
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date'
+    }
+    
+    const now = new Date()
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor((now - date) / (1000 * 60))
+      return diffInMinutes <= 0 ? 'just now' : `${diffInMinutes} minutes ago`
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hours ago`
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24)
+      return `${diffInDays} days ago`
+    }
+  } catch (error) {
+    console.warn('Invalid timestamp:', dateString)
+    return 'Invalid Date'
   }
 }
 

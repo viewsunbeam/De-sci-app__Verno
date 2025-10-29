@@ -59,7 +59,7 @@
           </template>
           <n-statistic 
             label="综合得分" 
-            :value="dashboardStats?.influence || 1250" 
+            :value="dashboardStats?.influence || 0" 
           />
           <template #footer>
             <n-text depth="3" style="font-size: 12px;">
@@ -160,7 +160,20 @@ const fetchDashboardStats = async () => {
 };
 
 const formatActivityTime = (timestamp) => {
-  return dayjs(timestamp).fromNow();
+  if (!timestamp) return 'Invalid Date'
+  
+  try {
+    // 如果时间戳已经包含时区信息，直接解析
+    if (timestamp.includes('T') || timestamp.includes('Z') || timestamp.includes('+')) {
+      return dayjs(timestamp).fromNow();
+    }
+    
+    // 否则，假设是UTC时间，添加Z后缀
+    return dayjs(timestamp + 'Z').fromNow();
+  } catch (error) {
+    console.warn('Invalid timestamp:', timestamp)
+    return 'Invalid Date'
+  }
 };
 
 const getActivityIcon = (activityType) => {

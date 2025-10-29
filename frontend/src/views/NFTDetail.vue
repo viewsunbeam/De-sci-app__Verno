@@ -194,6 +194,11 @@
                     </div>
                   </div>
                 </div>
+
+                <!-- Blockchain Information -->
+                <div class="detail-section">
+                  <NFTBlockchainInfo :nft-info="nft" />
+                </div>
               </div>
             </div>
           </div>
@@ -328,6 +333,7 @@ import {
   DownloadOutline, CopyOutline
 } from '@vicons/ionicons5'
 import dayjs from 'dayjs'
+import NFTBlockchainInfo from '../components/NFTBlockchainInfo.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -576,9 +582,21 @@ const shareNFT = () => {
 }
 
 const viewOnBlockchain = () => {
-  if (nft.value?.tokenId) {
-    message.info(`Opening blockchain explorer for token: ${nft.value.tokenId}`)
-    // TODO: Open actual blockchain explorer
+  console.log('NFT data:', nft.value) // 调试日志
+  
+  if (nft.value?.txHash) {
+    // 如果有交易哈希，跳转到区块链浏览器搜索交易
+    console.log('Using txHash:', nft.value.txHash) // 调试日志
+    const explorerUrl = `http://localhost:8081/blockchain-explorer-simple.html?search=${encodeURIComponent(nft.value.txHash)}`
+    window.open(explorerUrl, '_blank')
+    message.success(`Opening blockchain explorer for transaction: ${nft.value.txHash.substring(0, 10)}...`)
+  } else if (nft.value?.tokenId) {
+    // 如果没有交易哈希但有tokenId，显示提示信息
+    message.info(`Token ID: ${nft.value.tokenId} - Transaction hash not available`)
+    console.log('No txHash found, available fields:', Object.keys(nft.value))
+  } else {
+    message.warning('No blockchain information available for this NFT')
+    console.log('No NFT data available')
   }
 }
 

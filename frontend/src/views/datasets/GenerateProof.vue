@@ -322,6 +322,9 @@ const generateProof = async () => {
     proofResult.value = response.data
     message.success('Zero-Knowledge Proof generated successfully!')
     
+    // 🚀 触发ProofSubmitted事件到Go链下服务
+    await triggerProofSubmittedEvent(response.data)
+    
     // Refresh dataset data
     await fetchDataset()
   } catch (error) {
@@ -332,6 +335,47 @@ const generateProof = async () => {
     isGenerating.value = false
   }
 }
+
+// 🚀 触发ProofSubmitted事件到Go链下服务
+const triggerProofSubmittedEvent = async (proofData) => {
+  try {
+    console.log('🔍 [DEMO] Triggering ProofSubmitted event to Go service...')
+    
+    const eventPayload = {
+      eventName: "ProofSubmitted",
+      proofId: proofData.proof_id || proofData.id || Date.now().toString(),
+      submitter: currentUser.value.wallet_address,
+      blockNumber: 18500001 + Math.floor(Math.random() * 100),
+      txHash: "0xdemo" + Date.now().toString(16) + Math.random().toString(16).substr(2, 8),
+      proofData: JSON.stringify({
+        proof: proofData.proof_data || "Generated ZK Proof",
+        pi_a: ["0xabc123def456", "0x789012345678"],
+        pi_b: [["0x111222333444", "0x555666777888"], ["0x999aaabbbccc", "0xdddeeefffaaa"]],
+        pi_c: ["0xffffff000000", "0x123456789abc"]
+      }),
+      publicInputs: JSON.stringify(proofConfig.value.public_inputs || ["42", "1337"])
+    }
+    
+    console.log('🔍 [DEMO] Event payload:', eventPayload)
+    
+    // 发送事件到Go服务
+    const response = await axios.post('http://localhost:8090/api/events/simulate', eventPayload, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 10000
+    })
+    
+    console.log('✅ [DEMO] ProofSubmitted event sent successfully!')
+    console.log('📡 [DEMO] Go service response:', response.data)
+    
+    message.info('ProofSubmitted event triggered! Check the terminal for Go service logs.')
+    
+  } catch (error) {
+    console.error('❌ [DEMO] Failed to trigger ProofSubmitted event:', error)
+    console.warn('⚠️  Go service may not be running on localhost:8088')
+    // 不阻止主流程，只是警告
+  }
+}
+
 
 const goToDataset = () => {
   router.push(`/datasets/${datasetId.value}`)

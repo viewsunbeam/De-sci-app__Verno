@@ -6,7 +6,14 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     port: 5173,
-    host: 'localhost'
+    host: 'localhost',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   },
   define: {
     global: 'globalThis',

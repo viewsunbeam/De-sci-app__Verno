@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
+const ActivityLogger = require('../utils/logger');
+const axios = require('axios');
 
 // Get user by wallet address
 router.get('/wallet/:walletAddress', async (req, res) => {
@@ -125,6 +127,13 @@ router.get('/:userId/dashboard-stats', async (req, res) => {
       WHERE (p.owner_id = ? OR pc.user_id = ?) AND p.status NOT IN ('Completed', 'Cancelled')
     `, [userId, userId]);
 
+    // Get datasets count for this user
+    const datasetsCount = await db.getAsync(`
+      SELECT COUNT(*) as count
+      FROM datasets
+      WHERE owner_id = ?
+    `, [user.id]);
+
     // Get reviews count for this user
     const reviewsCount = await db.getAsync(`
       SELECT COUNT(*) as count
@@ -182,6 +191,7 @@ router.get('/:userId/dashboard-stats', async (req, res) => {
         total: projectsCount.count || 0,
         active: activeProjectsCount.count || 0
       },
+      datasets: datasetsCount.count || 0,
       reviews: reviewsCount.count,
       citations: citationsCount.count,
       reputation: reputationScore, // null will trigger error display
@@ -222,6 +232,13 @@ router.get('/wallet/:walletAddress/dashboard-stats', async (req, res) => {
       WHERE (p.owner_id = ? OR pc.user_id = ?) AND p.status NOT IN ('Completed', 'Cancelled')
     `, [user.id, user.id]);
 
+    // Get datasets count for this user
+    const datasetsCount = await db.getAsync(`
+      SELECT COUNT(*) as count
+      FROM datasets
+      WHERE owner_id = ?
+    `, [user.id]);
+
     // Get reviews count for this user
     const reviewsCount = await db.getAsync(`
       SELECT COUNT(*) as count
@@ -235,6 +252,17 @@ router.get('/wallet/:walletAddress/dashboard-stats', async (req, res) => {
       FROM publications
       WHERE author_id = ?
     `, [user.id]);
+
+    // Get influence score from influence API
+    let influenceScore = 0;
+    try {
+      const influenceResponse = await axios.get(`http://localhost:3000/api/influence/user/${user.id}`);
+      influenceScore = influenceResponse.data.totalScore || 0;
+      console.log(`✅ Got influence score for user ${user.id}: ${influenceScore}`);
+    } catch (error) {
+      console.log('❌ Failed to get influence score:', error.message);
+      influenceScore = 0;
+    }
 
     // Mock reputation score (since there's no reputation calculation yet)
     // In a real implementation, you would calculate based on reviews, citations, contributions, etc.
@@ -279,8 +307,10 @@ router.get('/wallet/:walletAddress/dashboard-stats', async (req, res) => {
         total: projectsCount.count || 0,
         active: activeProjectsCount.count || 0
       },
+      datasets: datasetsCount.count || 0,
       reviews: reviewsCount.count,
       citations: citationsCount.count,
+      influence: influenceScore,
       reputation: reputationScore, // null will trigger error display
       recentActivities: recentActivities || []
     };

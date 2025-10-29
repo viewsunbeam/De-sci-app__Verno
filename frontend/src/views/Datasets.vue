@@ -159,6 +159,13 @@
                   {{ getPrivacyLabel(dataset.effective_privacy_level) }}
                 </n-tag>
                 
+                <n-tag v-if="dataset.zk_proof_id" :type="getZKProofStatusType(dataset.zk_proof_status)" size="small">
+                  <template #icon>
+                    <n-icon :component="getZKProofStatusIcon(dataset.zk_proof_status)" />
+                  </template>
+                  {{ getZKProofStatusLabel(dataset.zk_proof_status) }}
+                </n-tag>
+                
                 <n-tag type="info" size="small" v-if="dataset.category !== 'Other'">
                   {{ dataset.category }}
                 </n-tag>
@@ -183,7 +190,8 @@ import {
   TimeOutline, CheckmarkCircleOutline, AlertCircleOutline, LockClosedOutline,
   GlobeOutline, ShieldCheckmarkOutline, KeyOutline, SettingsOutline,
   TrashOutline, AnalyticsOutline, ShareOutline, ServerOutline,
-  DocumentAttachOutline, GridOutline, CreateOutline
+  DocumentAttachOutline, GridOutline, CreateOutline, RefreshOutline,
+  DiamondOutline
 } from '@vicons/ionicons5'
 import axios from 'axios'
 import dayjs from 'dayjs'
@@ -342,12 +350,17 @@ const getEffectiveStatus = (dataset) => {
   }
   
   // Check for pending states based on privacy level
-  if (dataset.privacy_level === 'encrypted' && !dataset.is_encrypted) {
-    return 'pending' // Needs encryption
+  if (dataset.privacy_level === 'encrypted' && !dataset.is_encrypted && !dataset.zk_proof_id) {
+    return 'pending' // Needs encryption (but not if ZK proof exists)
   }
   
   if (dataset.privacy_level === 'zk_proof_protected' && !dataset.zk_proof_id) {
     return 'pending' // Needs ZK proof generation
+  }
+  
+  // If has ZK proof with verified status, consider ready
+  if (dataset.zk_proof_id && dataset.zk_proof_status === 'verified') {
+    return 'ready'
   }
   
   // Otherwise, use the current status
@@ -423,6 +436,36 @@ const getPrivacyLabel = (privacyLevel) => {
   }
 }
 
+const getZKProofStatusType = (status) => {
+  switch (status) {
+    case 'verified': return 'success'
+    case 'pending': return 'warning'
+    case 'failed': return 'error'
+    case 'generating': return 'info'
+    default: return 'default'
+  }
+}
+
+const getZKProofStatusIcon = (status) => {
+  switch (status) {
+    case 'verified': return ShieldCheckmarkOutline
+    case 'pending': return TimeOutline
+    case 'failed': return AlertCircleOutline
+    case 'generating': return RefreshOutline
+    default: return ShieldCheckmarkOutline
+  }
+}
+
+const getZKProofStatusLabel = (status) => {
+  switch (status) {
+    case 'verified': return 'ZK Verified'
+    case 'pending': return 'ZK Pending'
+    case 'failed': return 'ZK Failed'
+    case 'generating': return 'ZK Generating'
+    default: return 'ZK Protected'
+  }
+}
+
 const getDatasetActions = (dataset) => {
   return [
     {
@@ -455,6 +498,11 @@ const getDatasetActions = (dataset) => {
       label: 'Share Dataset',
       key: 'share',
       icon: () => h(NIcon, { component: ShareOutline })
+    },
+    {
+      label: 'Mint NFT',
+      key: 'mint',
+      icon: () => h(NIcon, { component: DiamondOutline })
     },
     {
       type: 'divider'
@@ -490,6 +538,10 @@ const handleAction = (key, dataset) => {
     case 'share':
       // TODO: Implement share functionality
       message.info('Share functionality coming soon')
+      break
+    case 'mint':
+      // Navigate to NFT mint page with preset dataset type and ID
+      router.push(`/nft/mint?type=Dataset&id=${dataset.id}`)
       break
     case 'delete':
       showDeleteConfirmation(dataset)

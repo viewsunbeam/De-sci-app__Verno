@@ -209,6 +209,32 @@ func (el *EventListener) parseAndHandleEvent(vLog types.Log) error {
 					if len(vLog.Topics) > 1 {
 						authorAddr = common.HexToAddress(vLog.Topics[1].Hex()).Hex()
 					}
+				case "ProofSubmitted":
+					log.Printf("🔍 [ZKP] ProofSubmitted event detected!")
+					if len(vLog.Topics) > 1 {
+						bi := new(big.Int).SetBytes(vLog.Topics[1].Bytes())
+						tokenStr = bi.String()
+						log.Printf("🔍 [ZKP] Proof ID: %s", tokenStr)
+					}
+					if len(vLog.Topics) > 2 {
+						authorAddr = common.HexToAddress(vLog.Topics[2].Hex()).Hex()
+						log.Printf("🔍 [ZKP] Submitter: %s", authorAddr)
+					}
+					if v, ok := vals["proofData"].(string); ok {
+						maxLen := 100
+						if len(v) < maxLen {
+							maxLen = len(v)
+						}
+						log.Printf("🔍 [ZKP] Proof Data: %s...", v[:maxLen])
+						title = "ZK Proof #" + tokenStr
+					}
+					if v, ok := vals["publicInputs"].(string); ok {
+						maxLen := 100
+						if len(v) < maxLen {
+							maxLen = len(v)
+						}
+						log.Printf("🔍 [ZKP] Public Inputs: %s...", v[:maxLen])
+					}
 				}
 				break
 			}

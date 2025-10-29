@@ -1,47 +1,47 @@
 {
   "contracts": {
     "DeSciRegistry": {
-      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
       "abi": "artifacts/contracts/DeSciRegistry.sol/DeSciRegistry.json"
     },
     "ZKPVerifier": {
-      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "address": "0x9A676e781A523b5d0C0e43731313A708CB607508",
       "abi": "artifacts/contracts/ZKPVerifier.sol/ZKPVerifier.json"
     },
     "ZKProof": {
-      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
       "abi": "artifacts/contracts/ZKProof.sol/ZKProof.json"
     },
     "ConstraintManager": {
-      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
       "abi": "artifacts/contracts/ConstraintManager.sol/ConstraintManager.json"
     },
     "DataFeatureExtractor": {
-      "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      "address": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
       "abi": "artifacts/contracts/DataFeatureExtractor.sol/DataFeatureExtractor.json"
     },
     "ResearchDataVerifier": {
-      "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+      "address": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
       "abi": "artifacts/contracts/ResearchDataVerifier.sol/ResearchDataVerifier.json"
     },
     "DatasetManager": {
-      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+      "address": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
       "abi": "artifacts/contracts/DatasetManager.sol/DatasetManager.json"
     },
     "ResearchNFT": {
-      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      "address": "0xc6e7DF5E7b4f2A278906862b61205850344D4e7d",
       "abi": "artifacts/contracts/ResearchNFT.sol/ResearchNFT.json"
     },
     "InfluenceRanking": {
-      "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+      "address": "0x59b670e9fA9D0A427751Af201D676719a970857b",
       "abi": "artifacts/contracts/InfluenceRanking.sol/InfluenceRanking.json"
     },
     "DeSciPlatform": {
-      "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+      "address": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
       "abi": "artifacts/contracts/DeSciPlatform.sol/DeSciPlatform.json"
     },
     "SciToken": {
-      "address": "0x8aCd85898458400f7Db866d53FCFF6f0D49741FF",
+      "address": "0x56639dB16Ac50A89228026e42a316B30179A5376",
       "abi": "artifacts/contracts/DeSciPlatform.sol/SciToken.json"
     }
   },

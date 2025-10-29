@@ -36,11 +36,23 @@
     <div class="project-list">
       <n-card v-if="isLoading" class="project-item">Loading projects...</n-card>
       <n-card v-else-if="projects.length === 0" class="project-item">No projects found.</n-card>
-      <n-card v-for="project in projects" :key="project.id" class="project-item" @click="goToProject(project)">
+      <n-card v-for="project in projects" :key="project.id" class="project-item">
         <div class="project-info">
           <div class="project-header">
             <h3 class="project-name">{{ project.name }}</h3>
-            <n-tag :type="getStatusType(project.status)" size="small">{{ project.status }}</n-tag>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <n-tag :type="getStatusType(project.status)" size="small">{{ project.status }}</n-tag>
+              <n-dropdown
+                trigger="click"
+                placement="bottom-end"
+                :options="getProjectActions(project)"
+                @select="(key) => handleProjectAction(key, project)"
+              >
+                <n-button quaternary>
+                  <n-icon size="18"><EllipsisHorizontal /></n-icon>
+                </n-button>
+              </n-dropdown>
+            </div>
           </div>
           <div class="project-meta">
             <div class="meta-item">
@@ -88,9 +100,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { NInput, NButton, NIcon, NCard, NTag, NModal, NForm, NFormItem, NRadioGroup, NRadio, useMessage, NSelect } from 'naive-ui';
-import { PersonOutline, TimeOutline } from '@vicons/ionicons5';
+import { ref, onMounted, h } from 'vue';
+import { NInput, NButton, NIcon, NCard, NTag, NModal, NForm, NFormItem, NRadioGroup, NRadio, useMessage, NSelect, NDropdown, useDialog } from 'naive-ui';
+import { PersonOutline, TimeOutline, EllipsisHorizontal, TrashOutline, SettingsOutline, EyeOutline, CreateOutline, FolderOpenOutline, DiamondOutline } from '@vicons/ionicons5';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -99,10 +111,12 @@ dayjs.extend(relativeTime);
 
 const router = useRouter();
 const message = useMessage();
+const dialog = useDialog();
 
 const projects = ref([]);
 const isLoading = ref(true);
 const user = ref(null);
+const isDeleting = ref(false);
 
 const showCreateModal = ref(false);
 const isCreating = ref(false);
@@ -160,6 +174,90 @@ const fetchProjects = async () => {
     isLoading.value = false;
   }
 };
+
+// Actions
+const getProjectActions = (project) => {
+  const isOwner = project.owner_wallet_address && user.value?.wallet_address &&
+    project.owner_wallet_address.toLowerCase() === user.value.wallet_address.toLowerCase()
+  const canMintNFT = project.status === 'Completed'
+  
+  return [
+    { label: 'View', key: 'view', icon: () => h(NIcon, { component: EyeOutline }) },
+    { label: 'Edit', key: 'edit', icon: () => h(NIcon, { component: CreateOutline }) },
+    { label: 'Collaborators', key: 'collaborators', icon: () => h(NIcon, { component: SettingsOutline }) },
+    { label: 'Repository', key: 'repository', icon: () => h(NIcon, { component: FolderOpenOutline }) },
+    { 
+      label: canMintNFT ? 'Mint NFT' : 'Mint NFT (Completed only)', 
+      key: 'mint', 
+      icon: () => h(NIcon, { component: DiamondOutline }), 
+      disabled: !canMintNFT 
+    },
+    { type: 'divider' },
+    { label: isOwner ? 'Delete' : 'Delete (owner only)', key: 'delete', icon: () => h(NIcon, { component: TrashOutline }), props: { style: 'color:#d03050' }, disabled: !isOwner }
+  ]
+}
+
+const handleProjectAction = (key, project) => {
+  switch (key) {
+    case 'view':
+      goToProject(project)
+      break
+    case 'edit':
+      router.push(`/projects/${project.id}/edit`)
+      break
+    case 'collaborators':
+      router.push(`/projects/${project.id}/collaborators`)
+      break
+    case 'repository':
+      router.push(`/projects/${project.id}/repository`)
+      break
+    case 'mint':
+      if (project.status === 'Completed') {
+        // Navigate to NFT mint page with preset project type and ID
+        router.push(`/nft/mint?type=Project&id=${project.id}`)
+      } else {
+        message.warning('Only completed projects can be minted as NFTs')
+      }
+      break
+    case 'delete':
+      showDeleteProjectConfirmation(project)
+      break
+  }
+}
+
+const showDeleteProjectConfirmation = (project) => {
+  dialog.warning({
+    title: 'Delete Project',
+    content: `Are you sure you want to delete project "${project.name}"? This action cannot be undone.`,
+    positiveText: 'Delete',
+    negativeText: 'Cancel',
+    positiveButtonProps: { type: 'error' },
+    onPositiveClick: () => deleteProject(project)
+  })
+}
+
+const deleteProject = async (project) => {
+  if (!user.value?.wallet_address) {
+    message.error('Please connect your wallet first')
+    return
+  }
+  if (isDeleting.value) return
+  isDeleting.value = true
+  try {
+    await axios.delete(`http://localhost:3000/api/projects/${project.id}`, {
+      data: { owner_wallet_address: user.value.wallet_address }
+    })
+    // remove from list
+    const idx = projects.value.findIndex(p => p.id === project.id)
+    if (idx !== -1) projects.value.splice(idx, 1)
+    message.success('Project deleted successfully!')
+  } catch (error) {
+    console.error('Failed to delete project:', error)
+    message.error(error.response?.data?.error || 'Failed to delete project')
+  } finally {
+    isDeleting.value = false
+  }
+}
 
 const handleCreateProject = async () => {
   isCreating.value = true;

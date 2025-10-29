@@ -303,10 +303,13 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useMessage } from 'naive-ui'
+import { useResearchNFT } from '../composables/useResearchNFT'
+import { generateMockIPFSCID } from '../utils/ipfs.js'
 import {
   NForm, NFormItem, NSelect, NInput, NInputNumber, NCard, NButton,
   NIcon, NRadioGroup, NRadio, NSpace, NCheckbox, NDynamicTags,
-  NTabs, NTabPane, NUpload, NProgress, NAlert, useMessage
+  NTabs, NTabPane, NUpload, NProgress, NAlert
 } from 'naive-ui'
 import {
   AddOutline, TrashOutline, CloudUploadOutline, DiamondOutline
@@ -329,6 +332,24 @@ const emit = defineEmits(['success', 'error', 'cancel'])
 // Router and message
 const router = useRouter()
 const message = useMessage()
+const { 
+  mintNFT: mintNFTOnChain, 
+  isLoading: isBlockchainLoading, 
+  error: blockchainError,
+  txHash,
+  tokenId: mintedTokenId,
+  getEtherscanLink 
+} = useResearchNFT()
+
+// IPFS URL转换函数
+const convertIPFSUrl = (url) => {
+  if (!url) return null
+  if (url.startsWith('ipfs://')) {
+    const hash = url.replace('ipfs://', '')
+    return `https://ipfs.io/ipfs/${hash}`
+  }
+  return url
+}
 
 // Reactive data
 const mintFormRef = ref(null)
@@ -446,14 +467,18 @@ const formRules = {
     { 
       validator: (rule, value) => {
         if (!value) return new Error('Content CID is required')
-        // More flexible IPFS CID validation
-        if (value.startsWith('ipfs://Qm') && value.length >= 20) {
+        // Standard IPFS CID validation
+        if (value.startsWith('ipfs://Qm') && value.length >= 53) {
           return true
         }
-        if (value.startsWith('Qm') && value.length >= 15) {
+        if (value.startsWith('Qm') && value.length >= 46) {
           return true  
         }
-        return new Error('Invalid IPFS CID format. Should start with "ipfs://Qm" or "Qm"')
+        // Also accept shorter formats for development
+        if (value.startsWith('ipfs://') && value.length >= 15) {
+          return true
+        }
+        return new Error('Invalid IPFS CID format. Should be a valid IPFS hash')
       },
       trigger: 'blur' 
     }
@@ -518,16 +543,18 @@ const loadUserAssets = async (assetType) => {
         endpoint = `http://localhost:3000/api/datasets?wallet_address=${user.wallet_address}`
         break
       case 'Project':
-        endpoint = `http://localhost:3000/api/projects/user/${user.wallet_address}`
+        endpoint = `http://localhost:3000/api/projects?wallet_address=${user.wallet_address}`
         break
       case 'Publication':
         endpoint = `http://localhost:3000/api/publications/user/${user.wallet_address}`
         break
     }
     
+    console.log(`Loading ${assetType} assets from:`, endpoint)
     const response = await fetch(endpoint)
     if (response.ok) {
       const assets = await response.json()
+      console.log(`Received ${assets.length} ${assetType.toLowerCase()}s:`, assets)
       
       // Filter assets based on their readiness for NFT minting
       let filteredAssets = assets
@@ -592,10 +619,12 @@ const getSelectedAssetLabel = computed(() => {
 })
 
 const onAssetSelect = (value) => {
+  console.log('🎯 onAssetSelect called with value:', value)
   const selectedOption = filteredAssets.value.find(option => option.value === value)
   if (selectedOption) {
     const asset = selectedOption.data
-    console.log('Selected asset:', asset)
+    console.log('📋 Selected asset data:', asset)
+    console.log('🔧 Starting form auto-fill for asset type:', localMintForm.value.assetType)
     
     // Pre-fill form with asset data
     const assetTitle = asset.title || asset.name || 'Untitled Asset'
@@ -624,36 +653,44 @@ const onAssetSelect = (value) => {
     localMintForm.value.keywords = Array.isArray(keywords) ? keywords : 
       (typeof keywords === 'string' ? keywords.split(',').map(k => k.trim()) : [])
     
-    // Set content CID based on asset type
+    // Generate realistic IPFS CID based on asset type and data
     let contentCID = ''
+    
+    // Helper function to generate a realistic IPFS CID
+    const generateRealisticCID = (prefix = '') => {
+      return generateMockIPFSCID(prefix)
+    }
+    
     switch (localMintForm.value.assetType) {
-      case 'Project':
-        contentCID = asset.repo_cid || asset.repository_cid || asset.content_cid || ''
+      case 'Publication':
+        // Generate realistic CID for publication
+        contentCID = generateRealisticCID('pub')
         break
       case 'Dataset':
-        contentCID = asset.file_cid || asset.data_cid || asset.content_cid || ''
+        // Generate realistic CID for dataset
+        contentCID = generateRealisticCID('data')
         break
-      case 'Publication':
-        contentCID = asset.file_cid || asset.pdf_cid || asset.content_cid || ''
+      case 'Project':
+        // Generate realistic CID for project
+        contentCID = generateRealisticCID('proj')
         break
+      default:
+        contentCID = generateRealisticCID()
     }
     
-    // Generate mock CID if none exists
-    if (!contentCID) {
-      // Generate a proper 46-character Base58 string for IPFS v0 CID
-      const base58chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-      let randomCID = ''
-      for (let i = 0; i < 44; i++) {
-        randomCID += base58chars.charAt(Math.floor(Math.random() * base58chars.length))
-      }
-      contentCID = `ipfs://Qm${randomCID}`
-    }
     localMintForm.value.contentCID = contentCID
+    console.log('🔗 Generated Content CID:', contentCID, 'for asset type:', localMintForm.value.assetType)
     
-    // Set preview image if available
+    // Generate cover image CID
+    let coverImageCID = ''
     if (asset.preview_image || asset.image || asset.cover_image) {
-      localMintForm.value.previewImageCID = asset.preview_image || asset.image || asset.cover_image
+      coverImageCID = asset.preview_image || asset.image || asset.cover_image
+    } else {
+      // Generate a realistic cover image CID
+      coverImageCID = generateRealisticCID('img')
     }
+    localMintForm.value.coverImageCID = coverImageCID
+    console.log('🖼️ Generated Cover Image CID:', coverImageCID)
     
     // Set current user as first author
     const userData = localStorage.getItem('user')
@@ -662,7 +699,13 @@ const onAssetSelect = (value) => {
       localMintForm.value.authors[0].address = user.wallet_address
     }
     
-    console.log('Form auto-filled with asset data')
+    console.log('✅ Form auto-fill completed successfully!')
+    console.log('📝 Final form state:', {
+      title: localMintForm.value.title,
+      contentCID: localMintForm.value.contentCID,
+      coverImageCID: localMintForm.value.coverImageCID,
+      category: localMintForm.value.category
+    })
   }
 }
 
@@ -705,7 +748,39 @@ const handleCoverImageUpload = ({ fileList }) => {
 
 const submitMint = async () => {
   try {
-    await mintFormRef.value?.validate()
+    console.log('🚀 Starting NFT mint process...')
+    
+    // Log current form state before validation
+    console.log('📋 Current form state before validation:', {
+      assetType: localMintForm.value.assetType,
+      selectedAsset: localMintForm.value.selectedAsset,
+      title: localMintForm.value.title,
+      category: localMintForm.value.category,
+      description: localMintForm.value.description,
+      contentCID: localMintForm.value.contentCID,
+      openAccess: localMintForm.value.openAccess,
+      authors: localMintForm.value.authors
+    })
+    
+    // Validate form
+    try {
+      await mintFormRef.value?.validate()
+      console.log('✅ Form validation passed')
+    } catch (validationErrors) {
+      console.error('❌ Form validation failed:', validationErrors)
+      if (Array.isArray(validationErrors)) {
+        const errorMessages = validationErrors.map(err => {
+          if (typeof err === 'object' && err.message) {
+            return `${err.field || 'Field'}: ${err.message}`
+          }
+          return err.toString()
+        }).join('; ')
+        message.error(`Validation failed: ${errorMessages}`)
+      } else {
+        message.error('Please check all required fields')
+      }
+      return
+    }
     
     // Additional validation for shares
     if (!localMintForm.value.openAccess && totalShares.value !== 10000) {
@@ -739,35 +814,93 @@ const submitMint = async () => {
       coverImage: coverImageFiles.value.length > 0 ? coverImageFiles.value[0] : null
     }
     
-    // Call backend API to mint NFT
+    console.log('🔗 Starting blockchain NFT mint...')
+    
+    // Step 1: 调用区块链铸造NFT
+    const blockchainResult = await mintNFTOnChain(mintData)
+    console.log('✅ Blockchain mint successful:', blockchainResult)
+    
+    // Step 2: 将区块链信息保存到后端数据库
+    const backendMintData = {
+      ...mintData,
+      // 添加区块链信息
+      tokenId: blockchainResult.tokenId,
+      txHash: blockchainResult.txHash,
+      blockNumber: blockchainResult.blockNumber,
+      gasUsed: blockchainResult.gasUsed,
+      metadataURI: blockchainResult.metadataURI,
+      onChain: true
+    }
+    
+    console.log('💾 Saving to backend database...')
     const response = await fetch('http://localhost:3000/api/nfts/mint', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(mintData)
+      body: JSON.stringify(backendMintData)
     })
     
+    let result
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(errorData.error || 'Failed to mint NFT')
+      console.warn('⚠️ Backend save failed, but blockchain mint succeeded:', errorData)
+      // 即使后端保存失败，区块链铸造已成功，使用模拟结果
+      result = {
+        message: 'NFT minted successfully (blockchain only)',
+        nft: {
+          id: `mock_${blockchainResult.tokenId}`,
+          tokenId: blockchainResult.tokenId
+        }
+      }
+    } else {
+      result = await response.json()
     }
     
-    const result = await response.json()
+    // 显示成功消息和区块链信息
+    message.success(`NFT successfully minted! Token ID: ${blockchainResult.tokenId}`)
     
-    message.success('Asset successfully minted as NFT!')
-    emit('success', result)
+    // 显示Etherscan链接
+    const etherscanLink = getEtherscanLink(blockchainResult.txHash, 'tx')
+    console.log('🔍 Etherscan link:', etherscanLink)
     
-    // Navigate to NFT details page
-    if (result.nft && result.nft.id) {
-      setTimeout(() => {
+    // 发送成功事件，包含区块链信息
+    emit('success', {
+      ...result,
+      blockchain: blockchainResult,
+      etherscanLink
+    })
+    
+    // 延迟跳转到NFT详情页
+    setTimeout(() => {
+      if (result.nft && result.nft.id) {
         router.push(`/nft/${result.nft.id}`)
-      }, 1000)
-    }
+      } else if (blockchainResult.tokenId) {
+        // 如果后端保存失败，使用tokenId跳转
+        router.push(`/nft/token/${blockchainResult.tokenId}`)
+      }
+    }, 2000)
     
   } catch (error) {
-    console.error('Failed to mint NFT:', error)
-    const errorMessage = error.message || 'Failed to mint NFT'
+    console.error('❌ Failed to mint NFT:', error)
+    
+    let errorMessage = 'Failed to mint NFT'
+    
+    if (Array.isArray(error)) {
+      // Handle validation error arrays
+      errorMessage = error.map(err => err.message || err).join(', ')
+    } else if (error.response) {
+      // Handle HTTP response errors
+      errorMessage = error.response.data?.error || error.response.data?.message || `HTTP ${error.response.status}: ${error.response.statusText}`
+    } else if (error.message) {
+      // Handle standard errors
+      errorMessage = error.message
+    } else if (typeof error === 'string') {
+      // Handle string errors
+      errorMessage = error
+    }
+    
+    console.error('📝 Error message:', errorMessage)
     message.error(errorMessage)
     emit('error', error)
   } finally {
@@ -776,7 +909,7 @@ const submitMint = async () => {
 }
 
 // Initialize
-onMounted(() => {
+onMounted(async () => {
   // Load current user data
   const userData = localStorage.getItem('user')
   if (userData) {
@@ -793,7 +926,24 @@ onMounted(() => {
       localMintForm.value.openAccess = true
     }
     
-    loadUserAssets(props.presetAssetType)
+    // Load assets and then try to select preset asset if ID is provided
+    await loadUserAssets(props.presetAssetType)
+    
+    if (props.presetAssetId) {
+      localMintForm.value.selectedAsset = props.presetAssetId
+      console.log('🎯 Auto-selecting preset asset on mount:', props.presetAssetId)
+      
+      // Wait a bit for reactive updates, then trigger selection
+      setTimeout(() => {
+        const asset = filteredAssets.value.find(a => a.value === props.presetAssetId)
+        if (asset) {
+          console.log('✅ Found and selecting preset asset:', asset)
+          onAssetSelect(props.presetAssetId)
+        } else {
+          console.warn('❌ Preset asset not found in loaded assets:', filteredAssets.value)
+        }
+      }, 200)
+    }
   }
 })
 
@@ -801,10 +951,23 @@ onMounted(() => {
 watch(() => props.presetAssetId, (newId) => {
   if (newId && props.presetAssetType) {
     localMintForm.value.selectedAsset = newId
-    // Trigger asset selection after assets are loaded
-    setTimeout(() => {
-      onAssetSelect(newId)
-    }, 1000)
+    console.log('🎯 Preset asset ID detected:', newId, 'Type:', props.presetAssetType)
+    
+    // Try to trigger asset selection immediately, then with retries
+    const tryAssetSelection = (retries = 5) => {
+      const asset = filteredAssets.value.find(a => a.value === newId)
+      if (asset) {
+        console.log('✅ Found preset asset, auto-filling form:', asset)
+        onAssetSelect(newId)
+      } else if (retries > 0) {
+        console.log('⏳ Asset not loaded yet, retrying...', retries)
+        setTimeout(() => tryAssetSelection(retries - 1), 500)
+      } else {
+        console.warn('❌ Failed to find preset asset after retries')
+      }
+    }
+    
+    tryAssetSelection()
   }
 })
 

@@ -20,8 +20,15 @@
       <n-input placeholder="搜索项目 / 数据集" round clearable class="search-bar" />
       
       <!-- Web3 Connect Button -->
-      <div v-if="!isConnected" @click="handleConnect">
-        <n-button type="primary">连接钱包</n-button>
+      <div v-if="!isConnected">
+        <n-button 
+          type="primary" 
+          :loading="isConnecting" 
+          :disabled="isConnecting"
+          @click="handleConnect"
+        >
+          {{ isConnecting ? '连接中...' : '连接钱包' }}
+        </n-button>
       </div>
       <div v-else>
         <n-dropdown trigger="click" :options="userDropdownOptions" @select="handleUserDropdownSelect">
@@ -54,7 +61,7 @@ import { useRouter } from 'vue-router';
 import { useWeb3 } from '../composables/useWeb3';
 
 const router = useRouter();
-const { connectWallet, disconnectWallet, account, isConnected, connectionError } = useWeb3();
+const { connectWallet, disconnectWallet, account, isConnected, connectionError, isConnecting } = useWeb3();
 
 // --- User Role State ---
 const userRole = ref('研究员');
@@ -117,6 +124,11 @@ const testUserOptions = [
 const handleConnect = async () => {
     if (isConnected.value) {
         console.log("Already connected.");
+        return;
+    }
+    
+    if (isConnecting.value) {
+        console.log("Connection already in progress, ignoring click.");
         return;
     }
     

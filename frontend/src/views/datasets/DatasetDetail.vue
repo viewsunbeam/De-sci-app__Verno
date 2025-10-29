@@ -21,11 +21,11 @@
                 {{ getPrivacyLabel(dataset.effective_privacy_level) }}
               </n-tag>
               
-              <n-tag v-if="dataset.zk_proof_id" type="success" size="small">
+              <n-tag v-if="dataset.zk_proof_id" :type="getZKProofStatusType(dataset.zk_proof_status)" size="small">
                 <template #icon>
-                  <n-icon :component="ShieldCheckmarkOutline" />
+                  <n-icon :component="getZKProofStatusIcon(dataset.zk_proof_status)" />
                 </template>
-                ZK Protected
+                {{ getZKProofStatusLabel(dataset.zk_proof_status) }}
               </n-tag>
             </div>
           </div>
@@ -280,7 +280,7 @@ import {
   ShareOutline, DocumentTextOutline, ShieldCheckmarkOutline, GlobeOutline,
   LockClosedOutline, KeyOutline, CheckmarkCircleOutline, AlertCircleOutline,
   ServerOutline, DocumentAttachOutline, GridOutline, TrashOutline, PricetagOutline,
-  CreateOutline
+  CreateOutline, RefreshOutline
 } from '@vicons/ionicons5'
 import axios from 'axios'
 import dayjs from 'dayjs'
@@ -415,12 +415,17 @@ const getEffectiveStatus = (dataset) => {
   }
   
   // Check for pending states based on privacy level
-  if (dataset.privacy_level === 'encrypted' && !dataset.is_encrypted) {
-    return 'pending' // Needs encryption
+  if (dataset.privacy_level === 'encrypted' && !dataset.is_encrypted && !dataset.zk_proof_id) {
+    return 'pending' // Needs encryption (but not if ZK proof exists)
   }
   
   if (dataset.privacy_level === 'zk_proof_protected' && !dataset.zk_proof_id) {
     return 'pending' // Needs ZK proof generation
+  }
+  
+  // If has ZK proof with verified status, consider ready
+  if (dataset.zk_proof_id && dataset.zk_proof_status === 'verified') {
+    return 'ready'
   }
   
   // Otherwise, use the current status
@@ -493,6 +498,36 @@ const getPrivacyLabel = (privacyLevel) => {
     case 'zk_proof_protected': return 'ZK Protected'
     case 'privacy_protected': return 'ZK Protected'  // For backward compatibility
     default: return 'Unknown'
+  }
+}
+
+const getZKProofStatusType = (status) => {
+  switch (status) {
+    case 'verified': return 'success'
+    case 'pending': return 'warning'
+    case 'failed': return 'error'
+    case 'generating': return 'info'
+    default: return 'default'
+  }
+}
+
+const getZKProofStatusIcon = (status) => {
+  switch (status) {
+    case 'verified': return ShieldCheckmarkOutline
+    case 'pending': return TimeOutline
+    case 'failed': return AlertCircleOutline
+    case 'generating': return RefreshOutline
+    default: return ShieldCheckmarkOutline
+  }
+}
+
+const getZKProofStatusLabel = (status) => {
+  switch (status) {
+    case 'verified': return 'ZK Verified'
+    case 'pending': return 'ZK Pending'
+    case 'failed': return 'ZK Failed'
+    case 'generating': return 'ZK Generating'
+    default: return 'ZK Protected'
   }
 }
 

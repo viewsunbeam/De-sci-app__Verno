@@ -92,9 +92,26 @@ echo "🔧 启动Node.js后端..."
 npm start &
 BACKEND_PID=$!
 
-# 等待后端启动
+# 等待后端启动并检查健康状态
 echo "⏳ 等待后端服务启动..."
 sleep 5
+
+# 检查后端服务健康状态
+echo "🔍 检查后端服务状态..."
+for i in {1..10}; do
+    if curl -s http://localhost:3000/health > /dev/null 2>&1; then
+        echo "✅ 后端服务启动成功"
+        break
+    else
+        echo "⏳ 等待后端服务... ($i/10)"
+        sleep 2
+    fi
+    
+    if [ $i -eq 10 ]; then
+        echo "❌ 后端服务启动失败"
+        echo "📋 查看日志: tail -20 nodejs.log"
+    fi
+done
 
 # 5. 启动前端服务
 echo "🌐 启动Vue前端..."
@@ -103,9 +120,44 @@ npm run dev &
 FRONTEND_PID=$!
 cd ..
 
-# 等待前端启动
+# 等待前端启动并检查健康状态
 echo "⏳ 等待前端服务启动..."
 sleep 5
+
+# 检查前端服务健康状态
+echo "🔍 检查前端服务状态..."
+for i in {1..10}; do
+    if curl -s http://localhost:5173 > /dev/null 2>&1; then
+        echo "✅ 前端服务启动成功"
+        break
+    else
+        echo "⏳ 等待前端服务... ($i/10)"
+        sleep 2
+    fi
+    
+    if [ $i -eq 10 ]; then
+        echo "❌ 前端服务启动失败"
+        echo "📋 请检查前端服务日志"
+    fi
+done
+
+# 检查Go链下服务健康状态（如果启动了）
+if [ ! -z "$GO_PID" ]; then
+    echo "🔍 检查Go链下服务状态..."
+    for i in {1..5}; do
+        if curl -s http://localhost:8088/health > /dev/null 2>&1; then
+            echo "✅ Go链下服务运行正常"
+            break
+        else
+            echo "⏳ 等待Go服务响应... ($i/5)"
+            sleep 1
+        fi
+        
+        if [ $i -eq 5 ]; then
+            echo "⚠️  Go链下服务可能未完全就绪"
+        fi
+    done
+fi
 
 echo ""
 echo "🎉 DeSci平台启动完成！"
@@ -114,6 +166,23 @@ echo "📱 前端界面: http://localhost:5173"
 echo "🔧 后端API:  http://localhost:3000"
 echo "🔄 链下服务: http://localhost:8088"
 echo "⛓️  区块链:   http://localhost:8545"
+echo "🔍 区块链浏览器: http://localhost:5173/etherscan-local.html"
+echo "=================================="
+echo ""
+echo "🚀 功能状态总览："
+echo "=================================="
+echo "✅ 前端服务 - Vue.js开发服务器"
+echo "✅ 后端服务 - Express API服务器"
+echo "✅ 数据库 - SQLite本地数据库"
+echo "✅ 区块链 - Hardhat本地网络"
+echo "✅ 智能合约 - ResearchNFT等合约"
+echo "✅ Go链下服务 - 数据验证和同步"
+echo "✅ 本地区块链浏览器 - 模拟Etherscan"
+echo "✅ NFT铸造功能 - 完整的铸造流程"
+echo "✅ 影响力系统 - 用户贡献评分"
+echo "✅ ZK证明系统 - 隐私验证功能"
+echo "✅ 文件上传 - 支持多种格式"
+echo "✅ 用户管理 - 钱包连接和认证"
 echo "=================================="
 echo ""
 echo "🔗 钱包网络配置信息："

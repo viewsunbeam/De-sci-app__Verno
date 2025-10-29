@@ -101,8 +101,6 @@
                   <n-input 
                     v-model:value="paperForm.title" 
                     placeholder="Enter the title of your paper"
-                    :maxlength="200"
-                    show-count
                   />
                 </n-form-item>
               </n-gi>
@@ -113,6 +111,40 @@
                     :options="categoryOptions"
                     placeholder="Select research category"
                   />
+                </n-form-item>
+              </n-gi>
+              <n-gi>
+                <n-form-item label="Related Datasets (Optional)">
+                  <div class="datasets-input-container">
+                    <n-input-group>
+                      <n-select
+                        v-model:value="selectedDatasetId"
+                        :options="availableDatasets"
+                        placeholder="Select a dataset to link"
+                        clearable
+                        filterable
+                        :loading="isLoadingDatasets"
+                      />
+                      <n-button type="primary" @click="addDatasetLink" :disabled="!selectedDatasetId">
+                        Add
+                      </n-button>
+                    </n-input-group>
+                    <div class="datasets-display" v-if="paperForm.linkedDatasets.length > 0">
+                      <n-tag
+                        v-for="dataset in paperForm.linkedDatasets"
+                        :key="dataset.id"
+                        closable
+                        @close="removeDatasetLink(dataset.id)"
+                        type="info"
+                        style="margin: 4px 4px 0 0;"
+                      >
+                        {{ dataset.name }}
+                      </n-tag>
+                    </div>
+                  </div>
+                  <template #feedback>
+                    Link datasets used in your research (Current: {{ paperForm.linkedDatasets.length }})
+                  </template>
                 </n-form-item>
               </n-gi>
             </n-grid>
@@ -128,21 +160,18 @@
                     <n-input 
                       v-model:value="value.name" 
                       placeholder="Author name"
-                      :maxlength="100"
                     />
                   </n-gi>
                   <n-gi>
                     <n-input 
                       v-model:value="value.affiliation" 
                       placeholder="Affiliation"
-                      :maxlength="150"
                     />
                   </n-gi>
                   <n-gi>
                     <n-input 
                       v-model:value="value.email" 
                       placeholder="Email (optional)"
-                      :maxlength="100"
                     />
                   </n-gi>
                 </n-grid>
@@ -153,10 +182,8 @@
               <n-input
                 v-model:value="paperForm.abstract"
                 type="textarea"
-                placeholder="Enter the abstract of your paper (minimum 100 words)"
+                placeholder="Enter the abstract of your paper"
                 :rows="6"
-                :maxlength="2000"
-                show-count
               />
             </n-form-item>
             
@@ -164,12 +191,16 @@
               <n-gi>
                 <n-form-item label="Keywords" path="keywords">
                   <div class="keywords-input-container">
-                    <n-input
-                      v-model:value="keywordInput"
-                      placeholder="Type keyword and press Enter"
-                      @keydown.enter.prevent="addKeyword"
-                      @blur="addKeyword"
-                    />
+                    <n-input-group>
+                      <n-input
+                        v-model:value="keywordInput"
+                        placeholder="Type keyword here"
+                        @keydown.enter.prevent="addKeyword"
+                      />
+                      <n-button type="primary" @click="addKeyword" :disabled="!keywordInput.trim()">
+                        Add
+                      </n-button>
+                    </n-input-group>
                     <div class="keywords-display" v-if="paperForm.keywords.length > 0">
                       <n-tag
                         v-for="(keyword, index) in paperForm.keywords"
@@ -421,7 +452,7 @@ import { ref, computed, onMounted, h, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   NCard, NButton, NSteps, NStep, NUpload, NUploadDragger, NIcon, NText, NP,
-  NForm, NFormItem, NInput, NSelect, NDynamicInput, NGrid, NGi,
+  NForm, NFormItem, NInput, NInputGroup, NSelect, NDynamicInput, NGrid, NGi,
   NRadioGroup, NRadio, NTag, NProgress, useMessage
 } from 'naive-ui'
 import {
@@ -440,6 +471,11 @@ const publicationType = ref('')
 const isSubmitting = ref(false)
 const keywordInput = ref('')
 
+// Dataset related
+const selectedDatasetId = ref(null)
+const availableDatasets = ref([])
+const isLoadingDatasets = ref(false)
+
 // Form refs
 const paperFormRef = ref(null)
 const uploadRef = ref(null)
@@ -451,6 +487,7 @@ const paperForm = ref({
   authors: [{ name: '', affiliation: '', email: '' }],
   abstract: '',
   keywords: [],
+  linkedDatasets: [],
   venue: '',
   funding: '',
   license: ''
@@ -503,8 +540,7 @@ const licenseOptions = [
 // Form validation rules
 const paperRules = {
   title: [
-    { required: true, message: 'Please enter paper title', trigger: 'blur' },
-    { min: 10, message: 'Title should be at least 10 characters', trigger: 'blur' }
+    { required: true, message: 'Please enter paper title', trigger: 'blur' }
   ],
   category: [
     { required: true, message: 'Please select a category', trigger: 'change' }
@@ -521,15 +557,14 @@ const paperRules = {
     }
   ],
   abstract: [
-    { required: true, message: 'Please enter abstract', trigger: 'blur' },
-    { min: 100, message: 'Abstract should be at least 100 characters', trigger: 'blur' }
+    { required: true, message: 'Please enter abstract', trigger: 'blur' }
   ],
   keywords: [
     { 
       required: true, 
       validator: (rule, value) => {
         console.log('Keywords validation:', value)
-        if (!value || value.length < 2) return new Error('At least 2 keywords are required')
+        if (!value || value.length < 1) return new Error('At least 1 keyword is required')
         return true
       },
       trigger: ['change', 'blur']
@@ -627,20 +662,55 @@ const submitPaper = async () => {
   try {
     isSubmitting.value = true
     
-    // Simulate submission
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // Get current user wallet address
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
     
-    const paperId = Math.floor(Math.random() * 1000) + 1
+    // Prepare paper data for submission
+    const paperData = {
+      title: paperForm.value.title,
+      category: paperForm.value.category,
+      authors: JSON.stringify(paperForm.value.authors), // Backend expects JSON string
+      abstract: paperForm.value.abstract,
+      keywords: JSON.stringify(paperForm.value.keywords), // Backend expects JSON string
+      author_wallet_address: currentUser.wallet_address || '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      status: publicationType.value === 'peer-review' ? 'Under Review' : 'Published',
+      published_at: publicationType.value === 'preprint' ? new Date().toISOString() : null
+    }
+    
+    console.log('Submitting paper data:', paperData)
+    
+    // Call backend API to save paper
+    const response = await fetch('http://localhost:3000/api/publications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(paperData)
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    const result = await response.json()
+    console.log('Paper submitted successfully:', result)
+    
+    // Link datasets if any were selected
+    if (paperForm.value.linkedDatasets.length > 0 && result.id) {
+      await linkDatasetsToPublication(result.id)
+    }
     
     if (publicationType.value === 'peer-review') {
       message.success('Paper submitted for peer review!')
-      router.push(`/papers/${paperId}`)
     } else {
       message.success('Paper published as preprint!')
-      router.push(`/papers/${paperId}`)
     }
+    
+    // Redirect to publications list
+    router.push('/publications')
   } catch (error) {
-    message.error('Failed to submit paper')
+    console.error('Failed to submit paper:', error)
+    message.error('Failed to submit paper: ' + (error.message || 'Unknown error'))
   } finally {
     isSubmitting.value = false
   }
@@ -661,9 +731,113 @@ const removeKeyword = (index) => {
   console.log('Removed keyword at index:', index, 'Remaining:', paperForm.value.keywords)
 }
 
+// Dataset related methods
+const fetchAvailableDatasets = async () => {
+  try {
+    isLoadingDatasets.value = true
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+    
+    console.log('🔍 Current user data:', currentUser)
+    console.log('🔍 User ID:', currentUser.id)
+    
+    if (!currentUser.id) {
+      console.warn('No user ID found, user data:', currentUser)
+      return
+    }
+    
+    const response = await fetch(`http://localhost:3000/api/publication-datasets/user/${currentUser.id}/available-datasets`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    const datasets = await response.json()
+    console.log('📊 Received datasets:', datasets)
+    
+    availableDatasets.value = datasets.map(dataset => ({
+      label: `${dataset.name} (${dataset.category || 'No category'})`,
+      value: dataset.id,
+      dataset: dataset
+    }))
+    
+    console.log('📋 Formatted datasets for dropdown:', availableDatasets.value)
+  } catch (error) {
+    console.error('Failed to fetch available datasets:', error)
+    message.error('Failed to load available datasets')
+  } finally {
+    isLoadingDatasets.value = false
+  }
+}
+
+const addDatasetLink = () => {
+  if (!selectedDatasetId.value) return
+  
+  const selectedOption = availableDatasets.value.find(option => option.value === selectedDatasetId.value)
+  if (!selectedOption) return
+  
+  // Check if already added
+  if (paperForm.value.linkedDatasets.some(dataset => dataset.id === selectedDatasetId.value)) {
+    message.warning('Dataset already linked')
+    return
+  }
+  
+  paperForm.value.linkedDatasets.push({
+    id: selectedDatasetId.value,
+    name: selectedOption.dataset.name,
+    relationship_type: 'used' // Default relationship
+  })
+  
+  selectedDatasetId.value = null
+  message.success('Dataset linked successfully')
+}
+
+const removeDatasetLink = (datasetId) => {
+  const index = paperForm.value.linkedDatasets.findIndex(dataset => dataset.id === datasetId)
+  if (index !== -1) {
+    paperForm.value.linkedDatasets.splice(index, 1)
+    message.success('Dataset unlinked')
+  }
+}
+
+const linkDatasetsToPublication = async (publicationId) => {
+  try {
+    console.log('Linking datasets to publication:', publicationId, paperForm.value.linkedDatasets)
+    
+    for (const dataset of paperForm.value.linkedDatasets) {
+      const linkResponse = await fetch('http://localhost:3000/api/publication-datasets/link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          publication_id: publicationId,
+          dataset_id: dataset.id,
+          relationship_type: dataset.relationship_type || 'used',
+          description: `Dataset "${dataset.name}" used in this publication`
+        })
+      })
+      
+      if (!linkResponse.ok) {
+        console.error(`Failed to link dataset ${dataset.id}:`, await linkResponse.text())
+      } else {
+        console.log(`Successfully linked dataset ${dataset.id} to publication ${publicationId}`)
+      }
+    }
+    
+    if (paperForm.value.linkedDatasets.length > 0) {
+      message.success(`Successfully linked ${paperForm.value.linkedDatasets.length} dataset(s) to the publication`)
+    }
+  } catch (error) {
+    console.error('Failed to link datasets:', error)
+    message.warning('Paper saved successfully, but some dataset links may have failed')
+  }
+}
+
 onMounted(() => {
   // Initialize form
   console.log('Paper form initialized:', paperForm.value)
+  
+  // Load available datasets
+  fetchAvailableDatasets()
   
   // Watch keywords changes for debugging
   watch(() => paperForm.value.keywords, (newKeywords) => {
@@ -714,6 +888,16 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 4px;
 }
+
+.datasets-input-container {
+  width: 100%;
+}
+
+.datasets-display {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .step-indicator {

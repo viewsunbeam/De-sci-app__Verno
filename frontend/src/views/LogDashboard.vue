@@ -271,7 +271,21 @@ const actionTypeOptions = [
   { label: '登录', value: 'login' },
   { label: '上传', value: 'upload' },
   { label: '铸造', value: 'mint' },
-  { label: '提交', value: 'submit' }
+  { label: '提交', value: 'submit' },
+  // 关键操作类型
+  { label: '成员变更', value: 'member_change' },
+  { label: '权限调整', value: 'permission_change' },
+  { label: '身份验证', value: 'verify' },
+  { label: '取消验证', value: 'unverify' },
+  { label: '批准', value: 'approve' },
+  { label: '拒绝', value: 'reject' },
+  { label: '要求修改', value: 'request_revision' },
+  { label: '分配评审员', value: 'assign_reviewer' },
+  { label: '系统配置', value: 'config_change' },
+  { label: '授予权限', value: 'grant_permission' },
+  { label: '撤销权限', value: 'revoke_permission' },
+  { label: '添加协作者', value: 'add_collaborator' },
+  { label: '移除协作者', value: 'remove_collaborator' }
 ]
 
 const resourceTypeOptions = [
@@ -280,7 +294,10 @@ const resourceTypeOptions = [
   { label: '数据集', value: 'dataset' },
   { label: 'NFT', value: 'nft' },
   { label: '评审', value: 'review' },
-  { label: '出版物', value: 'publication' }
+  { label: '出版物', value: 'publication' },
+  // 新增资源类型
+  { label: '研究者', value: 'researcher' },
+  { label: '系统', value: 'system' }
 ]
 
 // Table columns
@@ -557,11 +574,37 @@ const getSeverityLabel = (severity) => {
 }
 
 const formatDateTime = (timestamp) => {
-  return new Date(timestamp).toLocaleString('zh-CN')
+  if (!timestamp) return 'Invalid Date'
+  
+  try {
+    // 如果时间戳已经包含时区信息，直接解析
+    if (timestamp.includes('T') || timestamp.includes('Z') || timestamp.includes('+')) {
+      return new Date(timestamp).toLocaleString('zh-CN')
+    }
+    
+    // 否则，假设是UTC时间，添加Z后缀
+    return new Date(timestamp + 'Z').toLocaleString('zh-CN')
+  } catch (error) {
+    console.warn('Invalid timestamp:', timestamp)
+    return 'Invalid Date'
+  }
 }
 
 const formatTime = (timestamp) => {
-  return new Date(timestamp).toLocaleTimeString('zh-CN')
+  if (!timestamp) return 'Invalid Date'
+  
+  try {
+    // 如果时间戳已经包含时区信息，直接解析
+    if (timestamp.includes('T') || timestamp.includes('Z') || timestamp.includes('+')) {
+      return new Date(timestamp).toLocaleTimeString('zh-CN')
+    }
+    
+    // 否则，假设是UTC时间，添加Z后缀
+    return new Date(timestamp + 'Z').toLocaleTimeString('zh-CN')
+  } catch (error) {
+    console.warn('Invalid timestamp:', timestamp)
+    return 'Invalid Date'
+  }
 }
 
 // Auto-refresh functionality

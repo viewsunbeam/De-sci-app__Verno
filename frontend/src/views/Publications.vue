@@ -190,16 +190,28 @@
       <div v-else class="papers-list">
         <div
           v-for="paper in filteredPapers"
-          :key="paper.id"
+          :key="paper.id || Math.random()"
           class="paper-card"
-          @click="viewPaper(paper)"
         >
           <div class="paper-header">
             <div class="paper-title-section">
               <h3 class="paper-title">{{ paper.title }}</h3>
               <div class="paper-meta">
-                <span class="paper-authors">{{ paper.authors.join(', ') }}</span>
+                <span class="paper-authors">{{ formatAuthors(paper.authors) }}</span>
                 <span class="paper-date">{{ formatDate(paper.createdAt) }}</span>
+              </div>
+              <!-- Related Datasets Display -->
+              <div v-if="paper.linkedDatasets && paper.linkedDatasets.length > 0" class="paper-datasets">
+                <span class="datasets-label">Datasets:</span>
+                <n-tag
+                  v-for="dataset in paper.linkedDatasets"
+                  :key="dataset.id"
+                  size="small"
+                  type="info"
+                  style="margin-right: 4px;"
+                >
+                  {{ dataset.name }}
+                </n-tag>
               </div>
             </div>
             <div class="paper-status-section">
@@ -245,16 +257,6 @@
             </div>
             
             <div class="action-buttons">
-              <n-button 
-                size="small" 
-                @click.stop="previewPaper(paper)"
-              >
-                <template #icon>
-                  <n-icon :component="EyeOutline" />
-                </template>
-                Preview
-              </n-button>
-              
               <n-dropdown
                 :options="getActionOptions(paper)"
                 @select="handleAction"
@@ -287,22 +289,24 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   NButton, NInput, NSelect, NGrid, NGi, NStatistic, NTag, NIcon, 
-  NPagination, NEmpty, NProgress, NDropdown, useMessage 
+  NPagination, NEmpty, NProgress, NDropdown, useMessage, useDialog 
 } from 'naive-ui'
 import {
   AddOutline, SearchOutline, EyeOutline, 
   EllipsisHorizontalOutline, DocumentOutline, TrashOutline,
   ShareOutline, DownloadOutline, RefreshOutline,
-  CheckmarkCircleOutline, CloudUploadOutline, TimeOutline, CreateOutline
+  CheckmarkCircleOutline, CloudUploadOutline, TimeOutline, CreateOutline,
+  DiamondOutline
 } from '@vicons/ionicons5'
 import dayjs from 'dayjs'
 
 const router = useRouter()
 const message = useMessage()
+const dialog = useDialog()
 
 // Reactive data
 const searchQuery = ref('')
@@ -345,12 +349,14 @@ const loadUserAndPublications = async () => {
 }
 
 const fetchPublications = async () => {
-  if (!user.value || !user.value.wallet_address) {
-    console.error('No user or wallet address available')
-    return
-  }
-
   try {
+    loading.value = true
+    
+    if (!user.value || !user.value.wallet_address) {
+      console.error('No user or wallet address available')
+      papers.value = []
+      return
+    }
     console.log('🔍 Fetching publications for user:', user.value.wallet_address)
     const response = await fetch(`http://localhost:3000/api/publications/user/${user.value.wallet_address}`)
     
@@ -390,18 +396,18 @@ const fetchPublications = async () => {
     
     // Filter to ensure we only show publications that truly belong to this user
     const userPublications = publicationsData.filter(pub => {
-      const isUsersPublication = pub.author_wallet_address === user.value.wallet_address
+      const isUsersPublication = pub.author_id === user.value.id
       console.log('🔍 Checking publication:', {
         title: pub.title,
-        expected_author: user.value.wallet_address,
-        actual_author: pub.author_wallet_address,
+        expected_author_id: user.value.id,
+        actual_author_id: pub.author_id,
         match: isUsersPublication
       })
       if (!isUsersPublication) {
         console.warn('⚠️ Found publication with different author:', {
           title: pub.title,
-          expected_author: user.value.wallet_address,
-          actual_author: pub.author_wallet_address
+          expected_author_id: user.value.id,
+          actual_author_id: pub.author_id
         })
       }
       return isUsersPublication
@@ -413,27 +419,44 @@ const fetchPublications = async () => {
     const finalPublications = userPublications.length > 0 ? userPublications : publicationsData
     console.log(`🛠️ Using ${finalPublications.length} publications (${userPublications.length > 0 ? 'filtered' : 'unfiltered for debugging'})`)
     
-    // Transform data to match the expected format
-    papers.value = finalPublications.map(publication => ({
-      id: publication.id,
-      title: publication.title,
-      authors: publication.authors,
-      abstract: publication.abstract || 'No abstract provided',
-      keywords: publication.keywords || [],
-      category: publication.category || 'Other',
-      status: publication.status,
-      createdAt: publication.createdAt,
-      publishedAt: publication.publishedAt,
-      submittedAt: publication.submittedAt,
-      lastModified: publication.lastModified,
-      doi: publication.doi,
-      citationCount: publication.citationCount || 0,
-      downloadCount: publication.downloadCount || 0,
-      reviewDeadline: publication.reviewDeadline,
-      peerReviewId: publication.peerReviewId,
-      reviewComments: publication.reviewComments,
-      preprintServer: publication.preprintServer
+    // Transform data to match the expected format and fetch linked datasets
+    const papersWithDatasets = await Promise.all(finalPublications.map(async (publication) => {
+      let linkedDatasets = []
+      
+      try {
+        // Fetch linked datasets for each publication
+        const datasetsResponse = await fetch(`http://localhost:3000/api/publication-datasets/publication/${publication.id}/datasets`)
+        if (datasetsResponse.ok) {
+          linkedDatasets = await datasetsResponse.json()
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch datasets for publication ${publication.id}:`, error)
+      }
+      
+      return {
+        id: publication.id,
+        title: publication.title,
+        authors: publication.authors,
+        abstract: publication.abstract || 'No abstract provided',
+        keywords: publication.keywords || [],
+        category: publication.category || 'Other',
+        status: publication.status,
+        createdAt: publication.createdAt,
+        publishedAt: publication.publishedAt,
+        submittedAt: publication.submittedAt,
+        lastModified: publication.lastModified,
+        doi: publication.doi,
+        citationCount: publication.citationCount || 0,
+        downloadCount: publication.downloadCount || 0,
+        reviewDeadline: publication.reviewDeadline,
+        peerReviewId: publication.peerReviewId,
+        reviewComments: publication.reviewComments,
+        preprintServer: publication.preprintServer,
+        linkedDatasets: linkedDatasets
+      }
     }))
+    
+    papers.value = papersWithDatasets
     
     error.value = null
   } catch (err) {
@@ -441,6 +464,8 @@ const fetchPublications = async () => {
     error.value = 'Failed to load publications'
     // Set empty array as fallback
     papers.value = []
+  } finally {
+    loading.value = false
   }
 }
 
@@ -549,6 +574,34 @@ const formatDate = (date) => {
   return dayjs(date).format('MMM DD, YYYY')
 }
 
+const formatAuthors = (authors) => {
+  try {
+    // If authors is already an array, use it directly
+    if (Array.isArray(authors)) {
+      return authors.map(author => 
+        typeof author === 'string' ? author : author.name
+      ).join(', ')
+    }
+    
+    // If authors is a string, try to parse it as JSON
+    if (typeof authors === 'string') {
+      const parsed = JSON.parse(authors)
+      if (Array.isArray(parsed)) {
+        return parsed.map(author => 
+          typeof author === 'string' ? author : author.name
+        ).join(', ')
+      }
+      // If it's just a string, return it directly
+      return authors
+    }
+    
+    return 'Unknown Author'
+  } catch (error) {
+    console.error('Error formatting authors:', error)
+    return typeof authors === 'string' ? authors : 'Unknown Author'
+  }
+}
+
 const getStatusType = (status) => {
   switch (status) {
     case 'Published': return 'success'
@@ -615,13 +668,29 @@ const getActionOptions = (paper) => {
     })
   }
 
-  if (paper.status === 'Draft') {
-    options.push({
-      label: 'Delete',
-      key: `delete-${paper.id}`,
-      icon: () => h(NIcon, null, { default: () => h(TrashOutline) })
-    })
-  }
+  // Mint NFT option - only for published papers
+  const canMintNFT = paper.status === 'Published'
+  options.push({
+    label: canMintNFT ? 'Mint NFT' : 'Mint NFT (Published only)',
+    key: `mint-${paper.id}`,
+    icon: () => h(NIcon, null, { default: () => h(DiamondOutline) }),
+    disabled: !canMintNFT
+  })
+
+  // Delete option - available for Draft and failed submissions
+  const canDelete = ['Draft', 'Revision Required'].includes(paper.status)
+  options.push({
+    type: 'divider'
+  })
+  options.push({
+    label: canDelete ? 'Delete' : 'Delete (Draft/Revision only)',
+    key: `delete-${paper.id}`,
+    icon: () => h(NIcon, null, { default: () => h(TrashOutline) }),
+    disabled: !canDelete,
+    props: {
+      style: 'color: #d03050'
+    }
+  })
 
   return options
 }
@@ -643,16 +712,11 @@ const importPaper = () => {
   router.push('/papers/import')
 }
 
-const viewPaper = (paper) => {
-  router.push(`/papers/${paper.id}`)
-}
+// Note: viewPaper function removed - functionality moved to dropdown menu "View Details" option
 
 
 
-const deletePaper = async (paper) => {
-  // TODO: Implement delete functionality with API call
-  console.log('Delete paper:', paper.id)
-}
+// Note: deletePaper function moved to after showDeleteConfirmation function
 
 const downloadPaper = (paper) => {
   // TODO: Implement download functionality
@@ -664,17 +728,24 @@ const sharePaper = (paper) => {
   console.log('Share paper:', paper.id)
 }
 
-const previewPaper = (paper) => {
-  router.push(`/papers/${paper.id}/preview`)
-}
+// Note: previewPaper function removed - functionality merged with View Details in dropdown menu
 
 const handleAction = (key) => {
   const [action, paperId] = key.split('-')
   const paper = papers.value.find(p => p.id === parseInt(paperId))
   
+  if (!paper) {
+    message.error('Paper not found')
+    return
+  }
+  
   switch (action) {
     case 'view':
-      viewPaper(paper)
+      if (paper && paper.id) {
+        router.push(`/papers/${paper.id}`)
+      } else {
+        message.error('Invalid paper data')
+      }
       break
     case 'share':
       navigator.clipboard.writeText(`${window.location.origin}/papers/${paperId}`)
@@ -684,9 +755,20 @@ const handleAction = (key) => {
       message.success(`Downloading: ${paper.title}`)
       // TODO: Implement download
       break
+    case 'mint':
+      if (paper.status === 'Published') {
+        // Navigate to NFT mint page with preset publication type and ID
+        router.push(`/nft/mint?type=Publication&id=${paper.id}`)
+      } else {
+        message.warning('Only published papers can be minted as NFTs')
+      }
+      break
     case 'delete':
-      // TODO: Implement delete confirmation dialog
-      message.info('Delete functionality will be implemented')
+      if (['Draft', 'Revision Required'].includes(paper.status)) {
+        showDeleteConfirmation(paper)
+      } else {
+        message.warning('Only draft or revision required papers can be deleted')
+      }
       break
   }
 }
@@ -696,9 +778,76 @@ const handleStatClick = (status) => {
   currentPage.value = 1 // Reset to first page when status changes
 }
 
-onMounted(() => {
-  loadUserAndPublications()
+const showDeleteConfirmation = (paper) => {
+  dialog.warning({
+    title: 'Delete Paper',
+    content: `Are you sure you want to delete "${paper.title}"? This action cannot be undone.`,
+    positiveText: 'Delete',
+    negativeText: 'Cancel',
+    positiveButtonProps: {
+      type: 'error'
+    },
+    onPositiveClick: () => {
+      deletePaper(paper)
+    }
+  })
+}
+
+const deletePaper = async (paper) => {
+  try {
+    const response = await fetch(`http://localhost:3000/api/publications/${paper.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    message.success(`Paper "${paper.title}" deleted successfully`)
+    
+    // Remove the paper from the local list
+    papers.value = papers.value.filter(p => p.id !== paper.id)
+    
+  } catch (error) {
+    console.error('Failed to delete paper:', error)
+    message.error('Failed to delete paper')
+  }
+}
+
+const fetchCurrentUser = async () => {
+  try {
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      user.value = JSON.parse(userData)
+      console.log('Current user loaded:', user.value)
+    } else {
+      console.warn('No user data found in localStorage')
+    }
+  } catch (error) {
+    console.error('Failed to fetch current user:', error)
+  }
+}
+
+onMounted(async () => {
+  try {
+    await fetchCurrentUser()
+    await fetchPublications()
+  } catch (error) {
+    console.error('Failed to initialize Publications page:', error)
+    message.error('Failed to load publications')
+  }
 })
+
+// Add error handling for unhandled promise rejections
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection:', event.reason)
+    event.preventDefault() // Prevent the default browser error handling
+  })
+}
 </script>
 
 <style scoped>
@@ -865,13 +1014,7 @@ onMounted(() => {
   border: 1px solid #30363d;
   border-radius: 12px;
   padding: 24px;
-  cursor: pointer;
   transition: all 0.3s ease;
-}
-
-.paper-card:hover {
-  border-color: #58a6ff;
-  box-shadow: 0 4px 16px rgba(88, 166, 255, 0.1);
 }
 
 .paper-header {
@@ -897,8 +1040,22 @@ onMounted(() => {
 .paper-meta {
   display: flex;
   gap: 16px;
-  font-size: 0.875rem;
-  color: #8b949e;
+  margin-top: 8px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.paper-datasets {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.datasets-label {
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .paper-status-section {

@@ -37,19 +37,30 @@
         <div class="warning-icon">
           <n-icon :component="WarningOutline" />
         </div>
-        <h3>Project Not Ready for NFT Minting</h3>
-        <p>Only completed projects can be minted as NFTs. This project has status: <strong>{{ projectStatus }}</strong></p>
+        <h3>{{ presetAssetType }} Not Ready for NFT Minting</h3>
+        <p v-if="presetAssetType === 'Project'">
+          Only completed projects can be minted as NFTs. This project has status: <strong>{{ projectStatus }}</strong>
+        </p>
+        <p v-else-if="presetAssetType === 'Publication'">
+          Only published papers can be minted as NFTs. This publication has status: <strong>{{ projectStatus }}</strong>
+        </p>
         <div class="warning-details">
-          <p>To mint this project as an NFT, please:</p>
-          <ul>
+          <p v-if="presetAssetType === 'Project'">To mint this project as an NFT, please:</p>
+          <p v-else-if="presetAssetType === 'Publication'">To mint this publication as an NFT, please:</p>
+          <ul v-if="presetAssetType === 'Project'">
             <li>Complete all project milestones</li>
             <li>Update the project status to "Completed"</li>
             <li>Ensure all deliverables are finalized</li>
           </ul>
+          <ul v-else-if="presetAssetType === 'Publication'">
+            <li>Complete the peer review process</li>
+            <li>Update the publication status to "Published"</li>
+            <li>Ensure the paper is finalized</li>
+          </ul>
         </div>
         <div class="warning-actions">
-          <n-button @click="goToProject" type="primary">
-            Go to Project
+          <n-button @click="goToAsset" type="primary">
+            Go to {{ presetAssetType }}
           </n-button>
           <n-button @click="goBack" secondary>
             Back to NFT Gallery
@@ -58,14 +69,32 @@
       </div>
 
       <!-- NFT Mint Form - Only show for completed projects -->
-      <div v-else>
+      <div v-else-if="!showTransactionStatus">
         <NFTMintForm 
           :preset-asset-type="presetAssetType"
           :preset-asset-id="presetAssetId"
-          :title="mintFormTitle"
           @success="onMintSuccess"
           @error="onMintError"
           @cancel="goBack"
+          @transaction-start="onTransactionStart"
+        />
+      </div>
+
+      <!-- Transaction Status Modal -->
+      <div v-else>
+        <TransactionStatus
+          :is-loading="transactionData.isLoading"
+          :success="transactionData.success"
+          :error="transactionData.error"
+          :tx-hash="transactionData.txHash"
+          :token-id="transactionData.tokenId"
+          :gas-used="transactionData.gasUsed"
+          :block-number="transactionData.blockNumber"
+          :etherscan-link="transactionData.etherscanLink"
+          :nft-id="transactionData.nftId"
+          @close="closeTransactionStatus"
+          @retry="retryTransaction"
+          @view-nft="viewNFTDetails"
         />
       </div>
     </div>
@@ -78,6 +107,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { NButton, NIcon, NSpin, useMessage } from 'naive-ui'
 import { ArrowBackOutline, AlertCircleOutline, WarningOutline } from '@vicons/ionicons5'
 import NFTMintForm from '../components/NFTMintForm.vue'
+import TransactionStatus from '../components/TransactionStatus.vue'
 import axios from 'axios'
 
 const route = useRoute()
@@ -89,8 +119,22 @@ const presetAssetType = ref('')
 const presetAssetId = ref(null)
 const isLoading = ref(false)
 const error = ref(null)
-const projectStatus = ref('')
 const projectData = ref(null)
+const projectStatus = ref('')
+
+// 交易状态管理
+const showTransactionStatus = ref(false)
+const transactionData = ref({
+  isLoading: false,
+  success: false,
+  error: null,
+  txHash: null,
+  tokenId: null,
+  gasUsed: null,
+  blockNumber: null,
+  etherscanLink: null,
+  nftId: null
+})
 
 // Computed properties
 const mintFormTitle = computed(() => {
@@ -101,10 +145,15 @@ const mintFormTitle = computed(() => {
 })
 
 const showNoCompletedProjectsWarning = computed(() => {
-  return presetAssetType.value === 'Project' && 
-         presetAssetId.value && 
-         projectStatus.value !== 'Completed' &&
-         !error.value
+  if (!presetAssetId.value || error.value) return false
+  
+  if (presetAssetType.value === 'Project') {
+    return projectStatus.value !== 'Completed'
+  } else if (presetAssetType.value === 'Publication') {
+    return projectStatus.value !== 'Published'
+  }
+  
+  return false // Datasets don't need status validation
 })
 
 // Methods
@@ -113,22 +162,124 @@ const goBack = () => {
   router.push('/nft')
 }
 
-const goToProject = () => {
+const goToAsset = () => {
   if (presetAssetId.value) {
-    router.push(`/projects/${presetAssetId.value}`)
+    if (presetAssetType.value === 'Project') {
+      router.push(`/projects/${presetAssetId.value}`)
+    } else if (presetAssetType.value === 'Publication') {
+      router.push(`/papers/${presetAssetId.value}`)
+    } else if (presetAssetType.value === 'Dataset') {
+      router.push(`/datasets/${presetAssetId.value}`)
+    }
   } else {
-    router.push('/projects')
+    // Fallback to respective list pages
+    if (presetAssetType.value === 'Project') {
+      router.push('/projects')
+    } else if (presetAssetType.value === 'Publication') {
+      router.push('/publications')
+    } else if (presetAssetType.value === 'Dataset') {
+      router.push('/datasets')
+    }
   }
 }
 
 const onMintSuccess = (result) => {
   console.log('NFT minted successfully:', result)
-  // The NFTMintForm component will handle navigation
+  
+  // 显示交易成功状态
+  showTransactionStatus.value = true
+  transactionData.value = {
+    isLoading: false,
+    success: true,
+    error: null,
+    txHash: result.blockchain?.txHash,
+    tokenId: result.blockchain?.tokenId,
+    gasUsed: result.blockchain?.gasUsed,
+    blockNumber: result.blockchain?.blockNumber,
+    etherscanLink: result.etherscanLink,
+    nftId: result.nft?.id
+  }
 }
 
 const onMintError = (error) => {
   console.error('Failed to mint NFT:', error)
+  
+  // 显示交易失败状态
+  showTransactionStatus.value = true
+  transactionData.value = {
+    isLoading: false,
+    success: false,
+    error: error.message || 'Transaction failed',
+    txHash: null,
+    tokenId: null,
+    gasUsed: null,
+    blockNumber: null,
+    etherscanLink: null,
+    nftId: null
+  }
 }
+
+const onTransactionStart = () => {
+  // 显示交易进行中状态
+  showTransactionStatus.value = true
+  transactionData.value = {
+    isLoading: true,
+    success: false,
+    error: null,
+    txHash: null,
+    tokenId: null,
+    gasUsed: null,
+    blockNumber: null,
+    etherscanLink: null,
+    nftId: null
+  }
+}
+
+const closeTransactionStatus = () => {
+  showTransactionStatus.value = false
+}
+
+const retryTransaction = () => {
+  showTransactionStatus.value = false
+  // 重置表单状态，允许用户重试
+}
+
+const viewNFTDetails = (nftId) => {
+  if (nftId) {
+    router.push(`/nft/${nftId}`)
+  } else if (transactionData.value.tokenId) {
+    router.push(`/nft/token/${transactionData.value.tokenId}`)
+  }
+}
+
+// 移除重复声明，已在上面定义
+
+// Initialize component based on route
+onMounted(async () => {
+  // Check if we're coming from a specific project
+  if (route.params.projectId) {
+    presetAssetType.value = 'Project'
+    presetAssetId.value = parseInt(route.params.projectId)
+    await fetchProjectDetails(presetAssetId.value)
+  }
+  
+  // Check query parameters for asset type and ID
+  if (route.query.type || route.query.assetType) {
+    presetAssetType.value = route.query.type || route.query.assetType
+  }
+  
+  if (route.query.id || route.query.assetId) {
+    presetAssetId.value = parseInt(route.query.id || route.query.assetId)
+    
+    // Fetch details and validate status for different asset types
+    if (presetAssetType.value === 'Project') {
+      await fetchProjectDetails(presetAssetId.value)
+    } else if (presetAssetType.value === 'Publication') {
+      await fetchPublicationDetails(presetAssetId.value)
+    }
+    // Datasets don't need status validation - all can be minted
+  }
+})
 
 const fetchProjectDetails = async (projectId) => {
   if (!projectId) return
@@ -161,6 +312,37 @@ const fetchProjectDetails = async (projectId) => {
   }
 }
 
+const fetchPublicationDetails = async (publicationId) => {
+  if (!publicationId) return
+  
+  isLoading.value = true
+  error.value = null
+  
+  try {
+    console.log('🔍 [ProjectNFT] Fetching publication details for ID:', publicationId)
+    
+    const response = await axios.get(`http://localhost:3000/api/publications/${publicationId}`)
+    projectData.value = response.data // Reuse projectData for simplicity
+    projectStatus.value = response.data.status || 'Unknown'
+    
+    console.log('📊 [ProjectNFT] Publication status:', projectStatus.value)
+    
+    if (projectStatus.value !== 'Published') {
+      console.log('⚠️ [ProjectNFT] Publication not published, showing warning')
+      message.warning(`Publication status is "${projectStatus.value}" - only published papers can be minted as NFTs`)
+    } else {
+      console.log('✅ [ProjectNFT] Publication is published, allowing NFT minting')
+    }
+    
+  } catch (err) {
+    console.error('❌ [ProjectNFT] Failed to fetch publication details:', err)
+    error.value = err.response?.data?.error || 'Failed to load publication details'
+    message.error('Failed to load publication information')
+  } finally {
+    isLoading.value = false
+  }
+}
+
 // Initialize component based on route
 onMounted(async () => {
   // Check if we're coming from a specific project
@@ -171,17 +353,20 @@ onMounted(async () => {
   }
   
   // Check query parameters for asset type and ID
-  if (route.query.assetType) {
-    presetAssetType.value = route.query.assetType
+  if (route.query.type || route.query.assetType) {
+    presetAssetType.value = route.query.type || route.query.assetType
   }
   
-  if (route.query.assetId) {
-    presetAssetId.value = parseInt(route.query.assetId)
+  if (route.query.id || route.query.assetId) {
+    presetAssetId.value = parseInt(route.query.id || route.query.assetId)
     
-    // If it's a project asset, fetch details
+    // Fetch details and validate status for different asset types
     if (presetAssetType.value === 'Project') {
       await fetchProjectDetails(presetAssetId.value)
+    } else if (presetAssetType.value === 'Publication') {
+      await fetchPublicationDetails(presetAssetId.value)
     }
+    // Datasets don't need status validation - all can be minted
   }
 })
 </script>

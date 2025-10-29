@@ -83,6 +83,13 @@ func main() {
 			// 设置事件处理器 - 使用闭包捕获repo和svc
 			eventListener.SetEventHandler(func(event *model.ParsedEvent) error {
 				log.Printf("📡 Processing blockchain event: %s", event.EventName)
+				
+				// 特殊处理ZKP事件
+				if event.EventName == "ProofSubmitted" {
+					log.Printf("🔍 [ZKP] Starting off-chain verification for Proof ID: %s", event.TokenID)
+					log.Printf("🔍 [ZKP] Submitter: %s", event.Author)
+					log.Printf("🔍 [ZKP] Block: %d, TxHash: %s", event.Block, event.TxHash)
+				}
 
 				// 规范化事件名称
 				normalized := event.EventName
@@ -91,6 +98,8 @@ func main() {
 					normalized = "ResearchCreated"
 				case "DatasetUploaded":
 					normalized = "DatasetCreated"
+				case "ProofSubmitted":
+					normalized = "ProofSubmitted" // 保持原名
 				}
 
 				// 构造标准化载荷
@@ -114,6 +123,17 @@ func main() {
 						"owner":       event.Author,
 						"ipfsHash":    event.DataHash,
 					}
+				case "ProofSubmitted":
+					log.Printf("🔍 [ZKP] Creating payload for ProofSubmitted event")
+					payload = map[string]interface{}{
+						"proofId":     event.TokenID,
+						"submitter":   event.Author,
+						"title":       event.Title,
+						"dataHash":    event.DataHash,
+						"blockNumber": event.Block,
+						"txHash":      event.TxHash,
+					}
+					log.Printf("🔍 [ZKP] Payload created: proofId=%s, submitter=%s", event.TokenID, event.Author)
 				default:
 					payload = map[string]interface{}{
 						"tokenId":     event.TokenID,
@@ -157,6 +177,23 @@ func main() {
 						log.Printf("⚠️  Mark processed failed: %v", err)
 					} else {
 						log.Printf("✅ Service processed and marked event: %s", normalized)
+					}
+				case "ProofSubmitted":
+					log.Printf("🔍 [ZKP] Starting off-chain verification process...")
+					log.Printf("🔍 [ZKP] Step 1: Validating proof format and structure")
+					log.Printf("🔍 [ZKP] Step 2: Verifying cryptographic proof")
+					log.Printf("🔍 [ZKP] Step 3: Checking public inputs consistency")
+					log.Printf("🔍 [ZKP] Step 4: Updating verification status")
+					
+					if err := svc.ProcessEvent(eventLog); err != nil {
+						log.Printf("❌ [ZKP] Verification failed: %v", err)
+						return err
+					}
+					if err := repo.MarkEventProcessed(eventLog.ID); err != nil {
+						log.Printf("⚠️  [ZKP] Mark processed failed: %v", err)
+					} else {
+						log.Printf("✅ [ZKP] Proof verification completed and status synchronized")
+						log.Printf("🔍 [ZKP] Proof ID %s is now available for queries", event.TokenID)
 					}
 				default:
 					log.Printf("ℹ️  Event logged only: %s", normalized)

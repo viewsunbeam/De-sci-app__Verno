@@ -7,12 +7,12 @@ import axios from 'axios';
 let web3ModalInstance = null;
 let provider = null;
 let signer = null;
-let isConnecting = false; // Add connection state tracking
 
 // --- Reactive state, kept simple and clean ---
 const account = ref(null);
 const isConnected = ref(false);
 const connectionError = ref(null);
+const isConnecting = ref(false); // Make this reactive
 
 // --- Provider Options ---
 const providerOptions = {
@@ -54,30 +54,52 @@ const loginAndFetchUser = async (userAccount) => {
     if (!userAccount) return null;
     try {
         console.log(`Calling backend login for account: ${userAccount}`);
+        
+        // Add timeout to prevent hanging
         const response = await axios.post('http://localhost:3000/api/auth/login', {
             walletAddress: userAccount
+        }, {
+            timeout: 10000, // 10 second timeout
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
+        
         console.log('Backend login response:', response.data);
-        return response.data.user;
+        
+        if (response.data && response.data.user) {
+            return response.data.user;
+        } else {
+            console.error('Invalid response format:', response.data);
+            return null;
+        }
     } catch (error) {
         console.error('Error calling backend login API:', error);
+        if (error.code === 'ECONNABORTED') {
+            console.error('Request timeout - backend may be slow or unresponsive');
+        } else if (error.response) {
+            console.error('Backend error response:', error.response.status, error.response.data);
+        } else if (error.request) {
+            console.error('No response received from backend');
+        }
         return null;
     }
 };
 
 const connectWallet = async () => {
     // Prevent multiple simultaneous connection attempts
-    if (isConnecting) {
+    if (isConnecting.value) {
         console.log("Connection already in progress, please wait...");
         return null;
     }
 
     if (isConnected.value) {
         console.log("Wallet already connected");
-        return { account: account.value, isConnected: true };
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        return user || { account: account.value, isConnected: true };
     }
 
-    isConnecting = true;
+    isConnecting.value = true;
     connectionError.value = null;
 
     try {
@@ -112,6 +134,8 @@ const connectWallet = async () => {
         if (user) {
             isConnected.value = true;
             console.log("Backend login successful");
+            // Small delay to ensure state is properly updated
+            await new Promise(resolve => setTimeout(resolve, 100));
             return user;
         } else {
             console.log("Backend login failed, disconnecting wallet");
@@ -136,7 +160,7 @@ const connectWallet = async () => {
         await disconnectWallet();
         return null;
     } finally {
-        isConnecting = false;
+        isConnecting.value = false;
     }
 };
 
@@ -155,7 +179,7 @@ const disconnectWallet = async () => {
         account.value = null;
         isConnected.value = false;
         connectionError.value = null;
-        isConnecting = false;
+        isConnecting.value = false;
         
         // Clear the Web3Modal instance to ensure fresh state on next connect
         web3ModalInstance = null;
@@ -174,6 +198,6 @@ export function useWeb3() {
         account: readonly(account),
         isConnected: readonly(isConnected),
         connectionError: readonly(connectionError),
-        isConnecting: readonly(ref(isConnecting)),
+        isConnecting: readonly(isConnecting),
     };
 } 

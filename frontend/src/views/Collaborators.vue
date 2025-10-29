@@ -44,8 +44,10 @@ import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { NButton, NIcon, NList, NListItem, NModal, NInput, NSelect, NTag, NForm, NFormItem } from 'naive-ui';
 import { PersonAddOutline, TrashBinOutline } from '@vicons/ionicons5';
+import { useWeb3 } from '../composables/useWeb3';
 
 const route = useRoute();
+const { account } = useWeb3();
 const collaborators = ref([]);
 const showAddModal = ref(false);
 const newCollaboratorAddress = ref('');
@@ -59,8 +61,8 @@ const roleOptions = [
 
 const fetchCollaborators = async () => {
   try {
-    const response = await axios.get(`http://localhost:3000/api/repository/${projectId.value}/collaborators`);
-    collaborators.value = response.data;
+    const response = await axios.get(`http://localhost:3000/api/projects/${projectId.value}`);
+    collaborators.value = response.data.collaborators || [];
   } catch (error) {
     console.error('Failed to fetch collaborators:', error);
   }
@@ -68,16 +70,32 @@ const fetchCollaborators = async () => {
 
 const addCollaborator = async () => {
   if (!newCollaboratorAddress.value.trim()) return;
+  
+  // 检查是否有当前用户信息
+  if (!account.value) {
+    console.error('No wallet connected');
+    return;
+  }
+  
   try {
-    await axios.post(`http://localhost:3000/api/repository/${projectId.value}/collaborators`, {
+    console.log('🔄 Adding collaborator:', {
       wallet_address: newCollaboratorAddress.value,
       role: newCollaboratorRole.value,
+      adder_wallet_address: account.value
     });
+    
+    await axios.post(`http://localhost:3000/api/projects/${projectId.value}/collaborators`, {
+      wallet_address: newCollaboratorAddress.value,
+      role: newCollaboratorRole.value,
+      adder_wallet_address: account.value, // 添加操作者钱包地址
+    });
+    
+    console.log('✅ Collaborator added successfully');
     showAddModal.value = false;
     newCollaboratorAddress.value = '';
     await fetchCollaborators(); // Refresh list
   } catch (error) {
-    console.error('Failed to add collaborator:', error);
+    console.error('❌ Failed to add collaborator:', error);
     // TODO: Show error message to user
   }
 };

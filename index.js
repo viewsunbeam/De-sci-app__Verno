@@ -54,6 +54,7 @@ const userRoutes = require('./routes/users');
 const datasetRoutes = require('./routes/datasets');
 const reviewRoutes = require('./routes/reviews');
 const publicationRoutes = require('./routes/publications');
+const publicationDatasetRoutes = require('./routes/publication-datasets');
 const nftRoutes = require('./routes/nfts');
 const logRoutes = require('./routes/logs');
 const chainRoutes = require('./routes/chain');
@@ -67,12 +68,16 @@ app.use('/api/users', userRoutes);
 app.use('/api/datasets', datasetRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/publications', publicationRoutes);
+app.use('/api/publication-datasets', publicationDatasetRoutes);
 app.use('/api/nfts', nftRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/chain', chainRoutes);
 
 const likesRoutes = require('./routes/likes');
 app.use('/api/likes', likesRoutes);
+
+const influenceRoutes = require('./routes/influence-standalone');
+app.use('/api/influence', influenceRoutes);
 
 app.get('/api/download/:filename', (req, res) => {
   const fileName = req.params.filename

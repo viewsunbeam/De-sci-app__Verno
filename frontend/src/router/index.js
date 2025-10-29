@@ -393,6 +393,18 @@ const routes = [
     ]
   },
   {
+    path: '/zkp/generate-proof',
+    component: MainLayout,
+    children: [
+      {
+        path: '',
+        name: 'GenerateProof',
+        component: () => import('../views/datasets/GenerateProof.vue'),
+        meta: { title: 'Generate ZK Proof' }
+      }
+    ]
+  },
+  {
     path: '/admin/logs',
     component: MainLayout,
     children: [

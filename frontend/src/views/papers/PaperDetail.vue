@@ -75,6 +75,24 @@
             </div>
           </n-card>
 
+          <!-- Related Datasets -->
+          <n-card v-if="paper.linkedDatasets && paper.linkedDatasets.length > 0" title="Related Datasets" class="content-card">
+            <div class="datasets-container">
+              <div v-for="dataset in paper.linkedDatasets" :key="dataset.id" class="dataset-item">
+                <div class="dataset-header">
+                  <n-tag type="info" size="medium">{{ dataset.name }}</n-tag>
+                  <span class="relationship-type">{{ dataset.relationship_type || 'used' }}</span>
+                </div>
+                <p v-if="dataset.description" class="dataset-description">{{ dataset.description }}</p>
+                <p v-if="dataset.relationship_description" class="dataset-description">{{ dataset.relationship_description }}</p>
+                <div class="dataset-meta">
+                  <span>Category: {{ dataset.category || 'Other' }}</span>
+                  <span v-if="dataset.file_size">Size: {{ formatFileSize(dataset.file_size) }}</span>
+                </div>
+              </div>
+            </div>
+          </n-card>
+
           <!-- Funding Information -->
           <n-card v-if="paper.funding" title="Funding Information" class="content-card">
             <p>{{ paper.funding }}</p>
@@ -218,7 +236,14 @@ const canEdit = computed(() => {
 
 // Methods
 const formatDate = (date) => {
-  return dayjs(date).format('MMMM DD, YYYY')
+  return dayjs(date).format('MMM DD, YYYY')
+}
+
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B'
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
 }
 
 const getStatusType = (status) => {
@@ -269,22 +294,12 @@ const viewReviews = () => {
 }
 
 const mintNFT = () => {
-  // 将论文数据编码为 URL 参数
-  const paperData = {
-    id: paper.value.id,
-    title: paper.value.title,
-    authors: paper.value.authors.map(author => author.name).join(', '),
-    category: paper.value.category,
-    abstract: paper.value.abstract,
-    keywords: paper.value.keywords,
-    doi: paper.value.doi,
-    venue: paper.value.venue,
-    publishedAt: paper.value.publishedAt
+  if (paper.value.status === 'Published') {
+    // Navigate to NFT mint page with preset publication type and ID
+    router.push(`/nft/mint?type=Publication&id=${paper.value.id}`)
+  } else {
+    message.warning('Only published papers can be minted as NFTs')
   }
-  
-  // 使用 base64 编码传递复杂数据
-  const encodedData = btoa(JSON.stringify(paperData))
-  router.push(`/nfts?mint=true&paper_data=${encodedData}`)
 }
 
 const generateProof = () => {
@@ -307,6 +322,17 @@ const fetchPaper = async () => {
     }
     
     const publicationData = await response.json()
+    
+    // Fetch linked datasets
+    let linkedDatasets = []
+    try {
+      const datasetsResponse = await fetch(`http://localhost:3000/api/publication-datasets/publication/${publicationId}/datasets`)
+      if (datasetsResponse.ok) {
+        linkedDatasets = await datasetsResponse.json()
+      }
+    } catch (error) {
+      console.warn('Failed to fetch linked datasets:', error)
+    }
     
     // Transform the data to match the expected format
     paper.value = {
@@ -333,11 +359,20 @@ const fetchPaper = async () => {
       downloadCount: publicationData.downloadCount || 0,
       citationCount: publicationData.citationCount || 0,
       shares: publicationData.shares || 0,
-      peerReviewId: publicationData.peerReviewId
+      peerReviewId: publicationData.peerReviewId,
+      linkedDatasets: linkedDatasets
     }
   } catch (error) {
     console.error('Failed to fetch paper:', error)
-    message.error('Failed to load paper details')
+    if (error.message.includes('404')) {
+      message.error('Paper not found')
+      // Redirect to publications list after 2 seconds
+      setTimeout(() => {
+        router.push('/publications')
+      }, 2000)
+    } else {
+      message.error('Failed to load paper details')
+    }
     paper.value = null
   } finally {
     isLoading.value = false
@@ -469,6 +504,50 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.datasets-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dataset-item {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dataset-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.relationship-type {
+  color: #9ca3af;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.dataset-description {
+  color: #c9d1d9;
+  font-size: 14px;
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.dataset-meta {
+  display: flex;
+  gap: 16px;
+  color: #9ca3af;
+  font-size: 12px;
+  margin-top: 8px;
 }
 
 .info-list {

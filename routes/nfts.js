@@ -165,6 +165,10 @@ router.get('/:nftId', async (req, res) => {
       metadataUri: nft.metadata_uri,
       assetType: nft.asset_type,
       projectId: nft.project_id,
+      txHash: nft.tx_hash,
+      blockNumber: nft.block_number,
+      gasUsed: nft.gas_used,
+      onChain: nft.on_chain,
       owner: {
         id: nft.owner_id,
         username: nft.owner_username,
@@ -198,7 +202,14 @@ router.post('/mint', upload.single('coverImage'), async (req, res) => {
     accessPrice,
     isLimitedEdition,
     editionSize,
-    coverImageCID
+    coverImageCID,
+    // 区块链相关字段
+    tokenId,
+    txHash,
+    blockNumber,
+    gasUsed,
+    metadataURI,
+    onChain = false
   } = req.body;
 
   if (!assetType || !selectedAsset || !title || !description || !contentCID) {
@@ -276,8 +287,8 @@ router.post('/mint', upload.single('coverImage'), async (req, res) => {
       return res.status(404).json({ error: 'Asset not found or not owned by user' });
     }
 
-    // Generate mock token ID and contract address
-    const tokenId = `0x${Date.now().toString(16)}${Math.random().toString(16).substr(2, 8)}`;
+    // Use provided tokenId or generate a mock one
+    const finalTokenIdForMetadata = tokenId || `0x${Date.now().toString(16)}${Math.random().toString(16).substr(2, 8)}`;
     const contractAddress = '0x1234567890abcdef1234567890abcdef12345678';
 
     // Handle cover image
@@ -317,11 +328,26 @@ router.post('/mint', upload.single('coverImage'), async (req, res) => {
       projectId = 4; // ML Climate Prediction Model project as default
     }
 
+    // 生成唯一的token_id（如果没有从区块链获得）
+    const finalTokenId = tokenId || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    
     const result = await db.runAsync(`
       INSERT INTO nfts (
-        project_id, token_id, contract_address, metadata_uri, owner_id, asset_type, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-    `, [projectId, tokenId, contractAddress, JSON.stringify(metadata), user.id, assetType]);
+        project_id, token_id, contract_address, metadata_uri, owner_id, asset_type, 
+        tx_hash, block_number, gas_used, on_chain, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `, [
+      projectId, 
+      finalTokenId, 
+      contractAddress, 
+      metadataURI || JSON.stringify(metadata), 
+      user.id, 
+      assetType,
+      txHash,
+      blockNumber ? parseInt(blockNumber) : null,
+      gasUsed,
+      onChain ? 1 : 0
+    ]);
 
     // Get the created NFT with owner info
     const newNFT = await db.getAsync(`
@@ -365,7 +391,11 @@ router.post('/mint', upload.single('coverImage'), async (req, res) => {
 
   } catch (error) {
     console.error('Failed to mint NFT:', error);
-    res.status(500).json({ error: 'Failed to mint NFT' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Failed to mint NFT',
+      details: error.message 
+    });
   }
 });
 

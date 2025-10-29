@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
+const ActivityLogger = require('../utils/logger');
 
 // Helper function to generate default image
 const generateDefaultImage = (title) => {
@@ -44,7 +45,7 @@ router.post('/', async (req, res) => {
 
   try {
     const user = await db.getAsync(
-      'SELECT id FROM users WHERE wallet_address = ?',
+      'SELECT id, username FROM users WHERE wallet_address = ?',
       [creator_wallet_address]
     );
 
@@ -65,10 +66,95 @@ router.post('/', async (req, res) => {
       [result.lastID]
     );
 
+    // Log the project creation activity
+    await ActivityLogger.logProjectCreated(
+      user.id,
+      user.username,
+      result.lastID,
+      name,
+      req
+    );
+
     res.status(201).json(newProject);
   } catch (error) {
     console.error('Failed to create project:', error);
     res.status(500).json({ error: 'Failed to create project' });
+  }
+});
+
+// Delete a project (owner only)
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { owner_wallet_address } = req.body;
+
+    if (!owner_wallet_address) {
+      return res.status(400).json({ error: 'owner_wallet_address is required' });
+    }
+
+    // Resolve owner by wallet
+    const owner = await db.getAsync(
+      'SELECT id, username FROM users WHERE wallet_address = ?',
+      [owner_wallet_address]
+    );
+    if (!owner) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check ownership
+    const project = await db.getAsync(
+      'SELECT * FROM projects WHERE id = ? AND owner_id = ?',
+      [id, owner.id]
+    );
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found or access denied' });
+    }
+
+    // Simple deletion - disable foreign keys temporarily
+    await db.runAsync('PRAGMA foreign_keys = OFF');
+    
+    try {
+      // Delete all related records
+      await db.runAsync('DELETE FROM iterations WHERE project_id = ?', [id]);
+      await db.runAsync('DELETE FROM project_collaborators WHERE project_id = ?', [id]);
+      await db.runAsync('DELETE FROM project_files WHERE project_id = ?', [id]);
+      await db.runAsync('DELETE FROM proofs WHERE project_id = ?', [id]);
+      await db.runAsync('DELETE FROM nfts WHERE project_id = ?', [id]);
+      await db.runAsync('DELETE FROM milestones WHERE project_id = ?', [id]);
+      
+      // Handle datasets and their dependencies
+      const projectDatasets = await db.allAsync('SELECT id FROM datasets WHERE project_id = ?', [id]);
+      for (const dataset of projectDatasets) {
+        await db.runAsync('UPDATE datasets SET zk_proof_id = NULL WHERE id = ?', [dataset.id]);
+        await db.runAsync('DELETE FROM dataset_usage WHERE dataset_id = ?', [dataset.id]);
+        await db.runAsync('DELETE FROM dataset_permissions WHERE dataset_id = ?', [dataset.id]);
+        await db.runAsync('DELETE FROM dataset_files WHERE dataset_id = ?', [dataset.id]);
+        await db.runAsync('DELETE FROM zk_proofs WHERE dataset_id = ?', [dataset.id]);
+      }
+      await db.runAsync('DELETE FROM datasets WHERE project_id = ?', [id]);
+      
+      // Finally delete the project
+      await db.runAsync('DELETE FROM projects WHERE id = ?', [id]);
+    } catch (deleteErr) {
+      console.error('Failed to delete project:', deleteErr);
+      return res.status(500).json({ error: 'Failed to delete project' });
+    } finally {
+      // Re-enable foreign keys
+      await db.runAsync('PRAGMA foreign_keys = ON');
+    }
+
+    // Audit log
+    try {
+      await ActivityLogger.logProjectDeleted(owner.id, owner.username, id, project.name, req);
+    } catch (logErr) {
+      console.warn('Project deletion logged with warning:', logErr?.message || logErr);
+    }
+
+    res.json({ message: 'Project deleted successfully' });
+  } catch (error) {
+    console.error('Failed to delete project - Full error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to delete project' });
   }
 });
 
@@ -116,12 +202,28 @@ router.get('/:id', async (req, res) => {
 
 // Add collaborator to project
 router.post('/:id/collaborators', async (req, res) => {
-  const { wallet_address, role = 'member' } = req.body;
+  const { wallet_address, role = 'member', adder_wallet_address } = req.body;
   
   try {
+    // Get project information
+    const project = await db.getAsync(
+      'SELECT * FROM projects WHERE id = ?',
+      [req.params.id]
+    );
+
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Get adder information (who is adding the collaborator)
+    const adder = adder_wallet_address ? await db.getAsync(
+      'SELECT id, username FROM users WHERE wallet_address = ?',
+      [adder_wallet_address]
+    ) : null;
+
     // Check if user exists
     const user = await db.getAsync(
-      'SELECT id FROM users WHERE wallet_address = ?',
+      'SELECT id, username FROM users WHERE wallet_address = ?',
       [wallet_address]
     );
 
@@ -144,6 +246,20 @@ router.post('/:id/collaborators', async (req, res) => {
       'INSERT INTO project_collaborators (project_id, user_id, role, added_at) VALUES (?, ?, ?, datetime(\'now\'))',
       [req.params.id, user.id, role]
     );
+
+    // 记录协作者添加日志
+    if (adder) {
+      await ActivityLogger.logProjectCollaboratorAdded(
+        adder.id,
+        adder.username,
+        wallet_address,
+        user.username,
+        req.params.id,
+        project.name,
+        role,
+        req
+      );
+    }
 
     res.status(201).json({ message: 'Collaborator added successfully' });
   } catch (error) {

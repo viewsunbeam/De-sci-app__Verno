@@ -32,7 +32,7 @@ type Config struct {
 
 func Load() *Config {
 	cfg := &Config{
-		Port:        getEnv("PORT", "8080"),
+		Port:        getEnv("PORT", "8090"),
 		EthereumRPC: getEnv("ETHEREUM_RPC", "http://localhost:8545"),
 		StartBlock:  getEnvUint64("START_BLOCK", 0),
 		PrivateKey:  getEnv("PRIVATE_KEY", ""),

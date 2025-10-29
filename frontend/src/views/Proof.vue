@@ -73,9 +73,9 @@
           </n-card>
         </div>
 
-        <!-- Filter and Search -->
-        <div class="filter-section">
-          <div class="filter-controls">
+        <!-- Search and Filter -->
+        <div class="search-filter-section">
+          <div class="search-container">
             <n-input
               v-model:value="searchQuery"
               placeholder="Search datasets by name..."
