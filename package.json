@@ -53,6 +53,7 @@
     "concurrently": "^8.2.0",
     "hardhat": "^2.26.3",
     "hardhat-gas-reporter": "^1.0.10",
+    "pkg": "^5.8.1",
     "solidity-coverage": "^0.8.16",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",

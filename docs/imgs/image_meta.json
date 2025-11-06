@@ -1,0 +1,362 @@
+[
+  {
+    "query": "学术研究工作流程图，展示同行评审和学术研究过程",
+    "image_info": {
+      "url": "https://www.frontierspartnerships.org/files/Articles/12054/xml-images/bjbs-81-12054-g001.webp",
+      "img_format": "WEBP",
+      "mode": "RGB",
+      "file_size": 303332,
+      "width": 930,
+      "height": 1056,
+      "total_pixels": 982080,
+      "basic_score": 0.9456868631760988,
+      "file_name": "学术研究流程图_3.webp"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "学术研究工作流程图，展示同行评审和学术研究过程",
+    "image_info": {
+      "url": "https://openpsychologyjournal.com/journal-images/review-workflow/peer-review-workflow.jpg",
+      "img_format": "JPEG",
+      "mode": "RGB",
+      "file_size": 225414,
+      "width": 1035,
+      "height": 626,
+      "total_pixels": 647910,
+      "basic_score": 0.901151261448644,
+      "file_name": "学术研究流程图_1.jpg"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "学术研究工作流程图，展示同行评审和学术研究过程",
+    "image_info": {
+      "url": "https://www.scribbr.com/wp-content/uploads/2022/09/The-peer-review-process.webp",
+      "img_format": "WEBP",
+      "mode": "RGBA",
+      "file_size": 24234,
+      "width": 1254,
+      "height": 570,
+      "total_pixels": 714780,
+      "basic_score": 0.872134233590813,
+      "file_name": "学术研究流程图_2.webp"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "NFT数字资产所有权技术示意图，展示数字确权概念",
+    "image_info": {
+      "url": "https://www.synchronoss.com/wp-content/uploads/NFT-Blog-Diagram.png",
+      "img_format": "PNG",
+      "mode": "RGBA",
+      "file_size": 382152,
+      "width": 1300,
+      "height": 989,
+      "total_pixels": 1285700,
+      "basic_score": 0.927852054771472,
+      "file_name": "NFT确权图_5.png"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "NFT数字资产所有权技术示意图，展示数字确权概念",
+    "image_info": {
+      "url": "https://www.gao.gov/assets/730/721068.png",
+      "img_format": "PNG",
+      "mode": "RGBA",
+      "file_size": 755553,
+      "width": 1051,
+      "height": 600,
+      "total_pixels": 630600,
+      "basic_score": 0.9207497185721873,
+      "file_name": "NFT确权图_7.png"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "NFT数字资产所有权技术示意图，展示数字确权概念",
+    "image_info": {
+      "url": "https://rightchoicerecoverynj.com/wp-content/uploads/Components-of-NFT-Technology-1024x832.jpg",
+      "img_format": "JPEG",
+      "mode": "RGB",
+      "file_size": 48107,
+      "width": 1024,
+      "height": 832,
+      "total_pixels": 851968,
+      "basic_score": 0.9158843722023543,
+      "file_name": "NFT确权图_1.jpg"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "数据管理和隐私保护的信息图表，展示数据安全概念",
+    "image_info": {
+      "url": "https://www.archtis.com/wp-content/uploads/2023/02/INFOGRAPHIC-Data-Security-in-SharePoint-M365_2-2023.png",
+      "img_format": "PNG",
+      "mode": "P",
+      "file_size": 100610,
+      "width": 1019,
+      "height": 638,
+      "total_pixels": 650122,
+      "basic_score": 0.8808206224788867,
+      "file_name": "数据安全图表_9.png"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "数据管理和隐私保护的信息图表，展示数据安全概念",
+    "image_info": {
+      "url": "https://www.osano.com/hs-fs/hubfs/assets/blogs/content/data-privacy-reasons-infographic.jpg?width=800&name=data-privacy-reasons-infographic.jpg",
+      "img_format": "JPEG",
+      "mode": "RGB",
+      "file_size": 147360,
+      "width": 800,
+      "height": 1500,
+      "total_pixels": 1200000,
+      "basic_score": 0.8761464275500852,
+      "file_name": "数据安全图表_0.jpg"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "数据管理和隐私保护的信息图表，展示数据安全概念",
+    "image_info": {
+      "url": "https://www.securityhq.com/wp-content/uploads/2021/07/SecurityHQ-Infographic-Tips-to-Protect-your-Data-538x1024.jpg",
+      "img_format": "JPEG",
+      "mode": "RGB",
+      "file_size": 90275,
+      "width": 538,
+      "height": 1024,
+      "total_pixels": 550912,
+      "basic_score": 0.8519547620471302,
+      "file_name": "数据安全图表_1.jpg"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "科研协作网络可视化图，展示研究者之间的合作关系",
+    "image_info": {
+      "url": "https://media.springernature.com/lw685/springer-static/image/art%3A10.1186%2Fs12961-016-0104-5/MediaObjects/12961_2016_104_Fig1_HTML.gif",
+      "img_format": "PNG",
+      "mode": "P",
+      "file_size": 61263,
+      "width": 567,
+      "height": 526,
+      "total_pixels": 298242,
+      "basic_score": 0.7783704917338972,
+      "file_name": "科研协作网络图_6.gif"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "科研协作网络可视化图，展示研究者之间的合作关系",
+    "image_info": {
+      "url": "https://journals.plos.org/plosone/article/figure/image?size=medium&id=10.1371/journal.pone.0111928.g001",
+      "img_format": "PNG",
+      "mode": "RGB",
+      "file_size": 132921,
+      "width": 600,
+      "height": 395,
+      "total_pixels": 237000,
+      "basic_score": 0.7672065556186738,
+      "file_name": "科研协作网络图_9.jpg"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "科研协作网络可视化图，展示研究者之间的合作关系",
+    "image_info": {
+      "url": "https://www.infotoday.com/online/may12/Belter4.jpg",
+      "img_format": "JPEG",
+      "mode": "RGB",
+      "file_size": 74417,
+      "width": 400,
+      "height": 394,
+      "total_pixels": 157600,
+      "basic_score": 0.7400590547481255,
+      "file_name": "科研协作网络图_4.jpg"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "零知识证明密码学验证示意图，展示隐私保护技术",
+    "image_info": {
+      "url": "https://media.licdn.com/dms/image/v2/D4D12AQF8PM56wiVnzw/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1689765477429?e=2147483647&v=beta&t=HtWxoyo-CHrL4qeQMZWcgU6w1Q8nYWLuCWIoHq77KaE",
+      "img_format": "PNG",
+      "mode": "RGBA",
+      "file_size": 116745,
+      "width": 1280,
+      "height": 720,
+      "total_pixels": 921600,
+      "basic_score": 0.9215624650677272,
+      "file_name": "零知识证明图_5.jpg"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "零知识证明密码学验证示意图，展示隐私保护技术",
+    "image_info": {
+      "url": "https://miro.medium.com/0*GOzUZGyNGL26C8fD.png",
+      "img_format": "PNG",
+      "mode": "RGBA",
+      "file_size": 147551,
+      "width": 1400,
+      "height": 866,
+      "total_pixels": 1212400,
+      "basic_score": 0.91625583810409,
+      "file_name": "零知识证明图_3.png"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "零知识证明密码学验证示意图，展示隐私保护技术",
+    "image_info": {
+      "url": "https://horizen.io/academy/assets/images/zero-knowledge-proofs-zkps-5706b5409ebe0c8c50644e9c35e47b68.jpeg",
+      "img_format": "JPEG",
+      "mode": "RGB",
+      "file_size": 91471,
+      "width": 1500,
+      "height": 857,
+      "total_pixels": 1285500,
+      "basic_score": 0.9150305007191252,
+      "file_name": "零知识证明图_9.jpeg"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "科研生态系统图表，展示科研数据和学术生态的复杂关系",
+    "image_info": {
+      "url": "https://blog.ldodds.com/wp-content/uploads/2021/03/screenshot-from-2021-03-19-15-04-14.png",
+      "img_format": "PNG",
+      "mode": "RGBA",
+      "file_size": 210185,
+      "width": 1186,
+      "height": 832,
+      "total_pixels": 986752,
+      "basic_score": 0.9326058877717732,
+      "file_name": "科研生态现状图_6.png"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "科研生态系统图表，展示科研数据和学术生态的复杂关系",
+    "image_info": {
+      "url": "https://miro.medium.com/v2/resize:fit:1400/1*_RDp_3-KDXv_vNUF7Vq8Bg.png",
+      "img_format": "PNG",
+      "mode": "RGBA",
+      "file_size": 401487,
+      "width": 1400,
+      "height": 1030,
+      "total_pixels": 1442000,
+      "basic_score": 0.9019266793717997,
+      "file_name": "科研生态现状图_1.png"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "科研生态系统图表，展示科研数据和学术生态的复杂关系",
+    "image_info": {
+      "url": "https://i.pinimg.com/736x/81/da/fd/81dafde095f0012857bf1c2c826b7c1d.jpg",
+      "img_format": "JPEG",
+      "mode": "RGB",
+      "file_size": 66810,
+      "width": 736,
+      "height": 692,
+      "total_pixels": 509312,
+      "basic_score": 0.8544645549245239,
+      "file_name": "科研生态现状图_4.jpg"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "区块链技术架构图，展示去中心化技术的基础设施",
+    "image_info": {
+      "url": "https://d32myzxfxyl12w.cloudfront.net/assets/images/article_images/bb5cbccab13a4a4e651a942f9abfee83b26e8ac9.webp?1702474556",
+      "img_format": "WEBP",
+      "mode": "RGB",
+      "file_size": 39604,
+      "width": 1023,
+      "height": 690,
+      "total_pixels": 705870,
+      "basic_score": 0.9078182164357733,
+      "file_name": "区块链架构图_0.webp"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "区块链技术架构图，展示去中心化技术的基础设施",
+    "image_info": {
+      "url": "https://www.iese.fraunhofer.de/blog/wp-content/uploads/2019/05/Blockchain_ApplicationNode_Alternatives.png",
+      "img_format": "PNG",
+      "mode": "RGBA",
+      "file_size": 104599,
+      "width": 1453,
+      "height": 1013,
+      "total_pixels": 1471889,
+      "basic_score": 0.8725627796663256,
+      "file_name": "区块链架构图_9.png"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "区块链技术架构图，展示去中心化技术的基础设施",
+    "image_info": {
+      "url": "https://d32myzxfxyl12w.cloudfront.net/assets/images/article_images/c6950e9ba892908488f7236d4cb52125d47cc571.webp?1702474578",
+      "img_format": "WEBP",
+      "mode": "RGB",
+      "file_size": 15010,
+      "width": 1023,
+      "height": 500,
+      "total_pixels": 511500,
+      "basic_score": 0.8419052976863716,
+      "file_name": "区块链架构图_1.webp"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "代币经济学激励机制图表，展示价值分配体系",
+    "image_info": {
+      "url": "https://bitsgap.com/content/images/2025/01/MAR-1421-2.png",
+      "img_format": "PNG",
+      "mode": "RGBA",
+      "file_size": 592722,
+      "width": 1300,
+      "height": 842,
+      "total_pixels": 1094600,
+      "basic_score": 0.9563481410682158,
+      "file_name": "代币经济图_4.png"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "代币经济学激励机制图表，展示价值分配体系",
+    "image_info": {
+      "url": "https://cdn.prod.website-files.com/66381c25a3042435a787bf52/66424a159eff24dc3338d920_624418f5fd64df1b09745486_Tokenomics%2520Tokenmetrics%2520venn.png",
+      "img_format": "PNG",
+      "mode": "RGBA",
+      "file_size": 64546,
+      "width": 1024,
+      "height": 768,
+      "total_pixels": 786432,
+      "basic_score": 0.9033557963942784,
+      "file_name": "代币经济图_6.png"
+    },
+    "llm_score": null
+  },
+  {
+    "query": "代币经济学激励机制图表，展示价值分配体系",
+    "image_info": {
+      "url": "https://media.calibraint.com/calibraint-wordpress/wp-content/uploads/2023/08/16103210/Anatomy-of-tokenomics-design-Calibraint-1024x461.jpg",
+      "img_format": "JPEG",
+      "mode": "RGB",
+      "file_size": 53358,
+      "width": 1024,
+      "height": 461,
+      "total_pixels": 472064,
+      "basic_score": 0.8081376706646892,
+      "file_name": "代币经济图_2.jpg"
+    },
+    "llm_score": null
+  }
+]

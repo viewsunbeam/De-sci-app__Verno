@@ -119,6 +119,8 @@ app.listen(port, async () => {
   await probeChainApi();
   app.locals.chainApiHealthy = chainApiHealthy;
 
+  setInterval(probeChainApi, 15000);
+
   if (blockchainEnabled) {
     console.log('✅ 智能合约服务已启用');
   } else {

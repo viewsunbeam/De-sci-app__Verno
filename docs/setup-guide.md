@@ -3,6 +3,14 @@
 - **建议优先使用 Docker Compose：** `cp .env.example .env && docker compose up --build --detach`
 - 如需纯本地开发，请按以下步骤操作。
 
+## 0. 自解压一键包（实验性）
+
+1. 在项目根目录执行 `./scripts/package-selfrun.sh [输出文件名]`，默认会生成 `verno-platform.run`。
+2. 将生成的 `.run` 文件发送给需要演示的平台环境，目标机器需至少安装 Node.js 20+ 与 Go 1.23+。
+3. 在目标机器运行 `chmod +x verno-platform.run && ./verno-platform.run`，脚本会自动解压到临时目录并调用 `start-platform.sh` 完成依赖安装与服务启动。
+
+> 该方式不会打包 `node_modules` 等体积较大的依赖，首次运行仍会安装 npm/go 依赖；若需离线演示，请提前在可联网环境执行一次并缓存依赖。
+
 ## 1. 环境准备
 - Node.js 20+
 - Go 1.23+

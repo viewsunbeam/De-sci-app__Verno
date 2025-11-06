@@ -78,7 +78,11 @@ fi
 echo "🔄 启动Go链下服务..."
 if [ -d "services/chain-api" ]; then
     cd services/chain-api
-    PORT=8088 go run cmd/server/main.go > ../../go-service.log 2>&1 &
+    GO_BIN="/opt/homebrew/bin/go"
+    if [ ! -x "$GO_BIN" ]; then
+        GO_BIN="$(command -v go)"
+    fi
+    PORT=8088 ETHEREUM_RPC=ws://localhost:8545 "$GO_BIN" run cmd/server/main.go > ../../go-service.log 2>&1 &
     GO_PID=$!
     cd ../..
     echo "✅ Go链下服务已启动 (PID: $GO_PID)"

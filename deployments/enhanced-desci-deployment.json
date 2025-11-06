@@ -1,7 +1,11 @@
 {
   "network": "localhost",
   "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+<<<<<<< HEAD
   "timestamp": "2025-10-29T06:56:58.817Z",
+=======
+  "timestamp": "2025-10-29T09:56:04.020Z",
+>>>>>>> 79ff40d (style&docs: 优化智能合约部署脚本的代码格式和缩进，完善测试和设计报告)
   "contracts": {
     "userRegistry": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
     "zkpVerifier": "0x9A676e781A523b5d0C0e43731313A708CB607508",
